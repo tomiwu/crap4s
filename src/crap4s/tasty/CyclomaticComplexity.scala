@@ -20,27 +20,42 @@ object CyclomaticComplexity:
 
   private def count(node: Any, inUnit: Boolean)(using Context): Int =
     node match
-      case _: Inlined                            => 0
-      case defDef: DefDef if isSynthetic(defDef) => 0
-      case _: DefDef if !inUnit                  => 0
-      case tree: Tree                            => own(tree) + sum(tree.productIterator, inUnit)
-      case items: IterableOnce[?]                => sum(items.iterator, inUnit)
-      case Left(value)                           => count(value, inUnit)
-      case Right(value)                          => count(value, inUnit)
-      case _                                     => 0
+      case _: Inlined     => 0
+      case defDef: DefDef => countDef(defDef, inUnit)
+      case other          => own(other) + sum(TreeChildren.of(other), inUnit)
 
-  private def sum(nodes: Iterator[Any], inUnit: Boolean)(using Context): Int =
+  private def countDef(defDef: DefDef, inUnit: Boolean)(using Context): Int =
+    if isSynthetic(defDef) || !inUnit then 0 else sum(TreeChildren.of(defDef), inUnit)
+
+  private def sum(nodes: List[Any], inUnit: Boolean)(using Context): Int =
     nodes.map(count(_, inUnit)).sum
 
-  private def own(tree: Tree)(using Context): Int =
+  private def own(node: Any)(using Context): Int =
+    node match
+      case tree: Tree => ownTree(tree)
+      case _          => 0
+
+  private def ownTree(tree: Tree)(using Context): Int =
     tree match
       case _: If | _: InlineIf | _: While => 1
-      case matchTree: Match               => extraCases(matchTree.cases)
-      case matchTree: InlineMatch         => extraCases(matchTree.cases)
-      case tryTree: Try                   => extraCases(tryTree.cases)
-      case caseDef: CaseDef               => caseDef.guard.size
       case select: Select                 => selectCount(select)
-      case _                              => 0
+      case other                          => caseCount(other)
+
+  private def caseCount(tree: Tree): Int =
+    tree match
+      case caseDef: CaseDef => caseDef.guard.size
+      case other            => extraCases(switchCases(other))
+
+  private def switchCases(tree: Tree): List[CaseDef] =
+    tree match
+      case matchTree: Match       => matchTree.cases
+      case matchTree: InlineMatch => matchTree.cases
+      case other                  => tryCases(other)
+
+  private def tryCases(tree: Tree): List[CaseDef] =
+    tree match
+      case tryTree: Try => tryTree.cases
+      case _            => Nil
 
   private def selectCount(select: Select)(using Context): Int =
     val name = plainName(select.name)

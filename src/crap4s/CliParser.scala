@@ -18,19 +18,30 @@ object CliParser:
   private def readFlags(args: List[String]): Either[String, Flags] =
     parseLoop(args, Flags(None, None, CliConfig.DefaultThreshold, false))
 
+  private type Step = Either[String, (List[String], Flags)]
+
+  private val valueOptions: Map[String, (Flags, String) => Either[String, Flags]] = Map(
+    "--tasty" -> ((flags, value) => Right(flags.copy(tasty = Some(value)))),
+    "--coverage" -> ((flags, value) => Right(flags.copy(coverage = Some(value)))),
+    "--threshold" -> ((flags, value) =>
+      parseThreshold(value).map(threshold => flags.copy(threshold = threshold))
+    )
+  )
+
   private def parseLoop(rest: List[String], flags: Flags): Either[String, Flags] =
     rest match
       case Nil => Right(flags)
-      case "--tasty" :: value :: tail =>
-        parseLoop(tail, flags.copy(tasty = Some(value)))
-      case "--coverage" :: value :: tail =>
-        parseLoop(tail, flags.copy(coverage = Some(value)))
-      case "--threshold" :: value :: tail =>
-        parseThreshold(value).flatMap(t => parseLoop(tail, flags.copy(threshold = t)))
-      case "--all" :: tail =>
-        parseLoop(tail, flags.copy(all = true))
-      case unknown :: _ =>
-        Left(s"Unknown option: $unknown")
+      case head :: tail =>
+        step(head, tail, flags).flatMap((remaining, next) => parseLoop(remaining, next))
+
+  private def step(head: String, tail: List[String], flags: Flags): Step =
+    (head, tail) match
+      case ("--all", _) => Right((tail, flags.copy(all = true)))
+      case (option, value :: remaining) =>
+        valueOptions.get(option).fold(unknown(option))(_(flags, value).map((remaining, _)))
+      case _ => unknown(head)
+
+  private def unknown(option: String): Step = Left(s"Unknown option: $option")
 
   private def parseThreshold(value: String): Either[String, Double] =
     value.toDoubleOption.toRight(s"Invalid threshold: $value")
