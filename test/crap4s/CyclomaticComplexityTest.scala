@@ -35,7 +35,11 @@ class CyclomaticComplexityTest extends FunSuite:
     "forWithGuard" -> 2,
     "onlyFinally" -> 1,
     "andOr" -> 3,
-    "nestedLambda" -> 2,
+    "nestedLambda" -> 1,
+    "simpleLambda" -> 1,
+    "lambdaInLambda" -> 1,
+    "localDefBranchy" -> 1,
+    "localDefSimple" -> 1,
     "inlineIf" -> 2,
     "callsInline" -> 1,
     "andChain" -> 2,
@@ -47,3 +51,30 @@ class CyclomaticComplexityTest extends FunSuite:
   expected.foreach: (name, value) =>
     test(s"CC of $name is $value"):
       assertEquals(cc(name), value)
+
+  private def units(parent: String): List[LoadedMethod] =
+    loaded.methods.filter(_.name.startsWith(parent + "$"))
+
+  private def unitCc(unit: LoadedMethod): Int =
+    CyclomaticComplexity.ofUnit(unit)(using loaded.context)
+
+  test("top-level lambda with branches is a separate unit"):
+    val found = units("nestedLambda")
+    assertEquals(found.map(unitCc), List(2))
+    assertEquals(found.head.kind, UnitKind.Lambda)
+    assert(found.head.name.matches("nestedLambda\\$lambda@\\d+"), found.head.name)
+    assert(found.head.position.startOffset < found.head.position.endOffset)
+
+  test("lambda with CC 1 is not a unit"):
+    assertEquals(units("simpleLambda"), Nil)
+
+  test("nested lambda is part of the outer lambda"):
+    assertEquals(units("lambdaInLambda").map(unitCc), List(3))
+
+  test("local def with branches is a separate unit"):
+    val found = units("localDefBranchy")
+    assertEquals(found.map(unitCc), List(2))
+    assert(found.head.name.matches("localDefBranchy\\$helper@\\d+"), found.head.name)
+
+  test("local def with CC 1 is not a unit"):
+    assertEquals(units("localDefSimple"), Nil)
