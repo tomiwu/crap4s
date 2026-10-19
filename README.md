@@ -19,16 +19,18 @@ Sandcastle runs an AI agent in a Podman container. The agent does one GitHub iss
 - Write the keys in `.sandcastle/.env` (see `.sandcastle/.env.example`). Git ignores this file. Do not commit it.
 - Build the image one time: `npx @ai-hero/sandcastle podman build-image`.
 
-### Run the loop with Cursor (Composer 2.5 Fast)
+### Run the loop with Claude Code (default, Claude Sonnet 5.5)
+
+Claude Code writes and reviews all code by default.
+
+```sh
+MAX_ITERATIONS=10 npx tsx .sandcastle/main.mts
+```
+
+### Run the loop with Cursor (option, Composer 2.5 Fast)
 
 ```sh
 AGENT=cursor MAX_ITERATIONS=10 npx tsx .sandcastle/main.mts
-```
-
-### Run the loop with Claude Code (Claude Sonnet 5.5)
-
-```sh
-AGENT=claude MAX_ITERATIONS=10 npx tsx .sandcastle/main.mts
 ```
 
 For Claude Code, set `CLAUDE_CODE_OAUTH_TOKEN` (run `claude setup-token`) or `ANTHROPIC_API_KEY` in `.sandcastle/.env`.

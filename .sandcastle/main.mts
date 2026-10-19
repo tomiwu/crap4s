@@ -12,8 +12,8 @@
 // The loop stops when no issue is ready, or when an issue cannot pass.
 //
 // Usage:
-//   AGENT=cursor MAX_ITERATIONS=10 npx tsx .sandcastle/main.mts   (Cursor, Composer 2.5 Fast)
-//   AGENT=claude MAX_ITERATIONS=10 npx tsx .sandcastle/main.mts   (Claude Code, Sonnet 5.5)
+//   MAX_ITERATIONS=10 npx tsx .sandcastle/main.mts                (default: Claude Code, Sonnet 5.5)
+//   AGENT=cursor MAX_ITERATIONS=10 npx tsx .sandcastle/main.mts   (option: Cursor, Composer 2.5 Fast)
 // If the Cursor agent fails because of credits or limits, the loop changes to Claude.
 
 import * as sandcastle from "@ai-hero/sandcastle";
@@ -24,7 +24,7 @@ import { join } from "node:path";
 
 const MAX_ITERATIONS = Number(process.env.MAX_ITERATIONS ?? "10");
 const MAX_FIX_ATTEMPTS = Number(process.env.MAX_FIX_ATTEMPTS ?? "3");
-let agentName = (process.env.AGENT ?? "cursor") === "claude" ? "claude" : "cursor";
+let agentName = (process.env.AGENT ?? "claude") === "cursor" ? "cursor" : "claude";
 const CURSOR_MODEL = process.env.CURSOR_MODEL ?? "composer-2.5-fast";
 const CLAUDE_MODEL = process.env.CLAUDE_MODEL ?? "claude-sonnet-5-5";
 const LIMIT_ERROR = /credit|quota|usage limit|rate limit|payment|out of (fast )?requests|insufficient/i;
