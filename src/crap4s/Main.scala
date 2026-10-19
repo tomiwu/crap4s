@@ -6,6 +6,17 @@ package crap4s
       Console.err.println(message)
       sys.exit(1)
     case Right(config) =>
+      runWithConfig(config)
+
+private def runWithConfig(config: CliConfig): Unit =
+  import crap4s.tasty.TastyLoader
+  import java.nio.file.Path
+
+  TastyLoader.load(Path.of(config.tastyDir)) match
+    case Left(message) =>
+      Console.err.println(message)
+      sys.exit(1)
+    case Right(_) =>
       if Crap4sDebug.enabled then println(config.debugLine)
       sys.exit(0)
 
