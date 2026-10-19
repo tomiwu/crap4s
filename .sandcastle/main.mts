@@ -63,6 +63,8 @@ function logHasLimitError(name?: string): boolean {
   }
 }
 const LABEL = "Sandcastle";
+// Issues to skip, for example issues that must change .github/ (GH_TOKEN has no Workflows permission).
+const SKIP = new Set((process.env.SKIP_ISSUES ?? "").split(",").filter(Boolean).map(Number));
 
 const hooks = {
   sandbox: {
@@ -83,7 +85,7 @@ function nextIssue(merged: Set<number>): Issue | undefined {
     sh("gh", ["issue", "list", "--state", "open", "--label", LABEL, "--limit", "100", "--json", "number,title,body"]),
   );
   const openNumbers = new Set(open.map((i) => i.number).filter((n) => !merged.has(n)));
-  open.splice(0, open.length, ...open.filter((i) => !merged.has(i.number)));
+  open.splice(0, open.length, ...open.filter((i) => !merged.has(i.number) && !SKIP.has(i.number)));
   const ready = open.filter((i) => {
     const blockers = [...i.body.matchAll(/Blocked by\s+((?:#\d+[\s,and]*)+)/gi)]
       .flatMap((m) => [...m[1].matchAll(/#(\d+)/g)].map((n) => Number(n[1])));

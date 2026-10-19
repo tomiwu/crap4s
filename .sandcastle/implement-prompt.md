@@ -28,6 +28,8 @@ Implement issue #{{ISSUE}} on branch `{{BRANCH}}`. Do only this issue.
 - Do not edit `docs/PRD.md`, `.sandcastle/` or `.github/`.
 - Do not leave commented-out code or TODO comments.
 - crap4s checks its own code. Every unit (method or top-level lambda) must have a CRAP score less than 4. Keep methods small and tested.
+- The self-check script name is `scripts/self-crap.sh`. If an issue uses another name (for example `self-check.sh`), use `scripts/self-crap.sh`.
+- `.github/workflows/ci.yml` exists. Extend it. Do not create a new workflow.
 - When `crap4s` can run end to end (issue #9 or later), make sure `scripts/self-crap.sh` exists and is executable. The script must: compile and test crap4s with `-coverage-out`, run crap4s on its own TASTy and coverage output, and exit with a code that is not 0 if a unit has CRAP 4 or more. CI (`.github/workflows/ci.yml`) runs this script when it exists.
 - If you cannot continue, write a comment on the issue with `gh issue comment {{ISSUE}}`. Explain the problem.
 
