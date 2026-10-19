@@ -40,7 +40,7 @@ Review the code changes on branch `{{BRANCH}}` and improve code clarity, consist
 
 5. **Follow docs/PRD.md** (crap4s spec).
 
-6. **Apply project standards**: Follow the coding standards defined in @.sandcastle/CODING_STANDARDS.md
+6. **Apply project standards**: Follow the coding standards in @.sandcastle/CODING_STANDARDS.md and in `docs/CODING_STANDARDS.md` (when it exists). `docs/CODING_STANDARDS.md` has priority.
 
 7. **Preserve functionality**: Never change what the code does - only how it does it. All original features, outputs, and behaviors must remain intact.
 

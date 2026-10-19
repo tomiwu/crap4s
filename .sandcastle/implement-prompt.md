@@ -14,7 +14,7 @@ You work on crap4s. crap4s is a Scala CLI tool. It calculates the CRAP score (Un
 
 Implement issue #{{ISSUE}} on branch `{{BRANCH}}`. Do only this issue.
 
-1. Read the issue. Read `docs/PRD.md`. Follow the PRD.
+1. Read the issue. Read `docs/PRD.md`. Follow the PRD. Follow `docs/CODING_STANDARDS.md` when it exists.
 2. Read the source files and tests that exist.
 3. Use Red-Green-Refactor. Write a failing test first. Then write the code that makes the test pass.
 4. Run `scala-cli compile .` and `scala-cli test .`. Fix all failures.

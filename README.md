@@ -10,7 +10,7 @@ Sandcastle runs an AI agent in a Podman container. The agent does one GitHub iss
 2. Implement the issue on a new branch. Then review the change.
 3. Run `scala-cli test .`. If `scripts/self-crap.sh` exists, run it. Each unit must have a CRAP score less than 4.
 4. If a check fails, let the agent fix the code (3 attempts maximum). If the checks still fail, stop the loop.
-5. Open a PR. Wait for CI. Squash-merge the PR. Close the issue.
+5. Open a PR. Wait until all GitHub Actions checks pass. Then squash-merge the PR and close the issue. If no check starts or a check fails, do not merge. Stop the loop.
 
 ### Prerequisites
 

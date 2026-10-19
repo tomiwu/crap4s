@@ -78,11 +78,12 @@ function sh(cmd: string, args: string[]): string {
 
 interface Issue { number: number; title: string; body: string }
 
-function nextIssue(): Issue | undefined {
+function nextIssue(merged: Set<number>): Issue | undefined {
   const open: Issue[] = JSON.parse(
     sh("gh", ["issue", "list", "--state", "open", "--label", LABEL, "--limit", "100", "--json", "number,title,body"]),
   );
-  const openNumbers = new Set(open.map((i) => i.number));
+  const openNumbers = new Set(open.map((i) => i.number).filter((n) => !merged.has(n)));
+  open.splice(0, open.length, ...open.filter((i) => !merged.has(i.number)));
   const ready = open.filter((i) => {
     const blockers = [...i.body.matchAll(/Blocked by\s+((?:#\d+[\s,and]*)+)/gi)]
       .flatMap((m) => [...m[1].matchAll(/#(\d+)/g)].map((n) => Number(n[1])));
@@ -114,7 +115,12 @@ console.log(`Agent: ${agentName}`);
 for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   sh("git", ["checkout", "main"]);
   sh("git", ["pull", "--rebase", "origin", "main"]);
-  const issue = nextIssue();
+  let issue = nextIssue(merged);
+  if (!issue) {
+    // The issue list can be stale just after a merge. Wait and try again one time.
+    await new Promise((r) => setTimeout(r, 30_000));
+    issue = nextIssue(merged);
+  }
   if (issue && merged.has(issue.number)) { console.log(`Issue #${issue.number} is already merged. Stopping.`); break; }
   if (!issue) { console.log("No ready issue. Stopping."); break; }
   console.log(`\n=== Iteration ${iteration}/${MAX_ITERATIONS}: issue #${issue.number} ${issue.title} ===\n`);
@@ -164,15 +170,23 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     "--title", issue.title,
     "--body", `This PR implements #${issue.number}.\n\nThe checks pass: \`scala-cli test .\` and the CRAP self-check (if available).\n\nCloses #${issue.number}`]);
   console.log(`PR: ${url}`);
-  const probe = spawnSync("gh", ["pr", "checks", url], { encoding: "utf8" });
-  const noChecks = /no checks reported/i.test(`${probe.stdout}${probe.stderr}`);
-  if (!noChecks) {
-    const watch = spawnSync("gh", ["pr", "checks", url, "--watch", "--fail-fast"], { stdio: "inherit", timeout: 30 * 60_000 });
-    if (watch.status !== 0) {
-      console.log(`CI failed for ${url}. Stopping the loop.`);
-      process.exitCode = 1;
-      break;
-    }
+  // Merge only when all GitHub Actions checks on the PR pass.
+  let hasChecks = false;
+  for (let wait = 0; wait < 12 && !hasChecks; wait++) {
+    await new Promise((r) => setTimeout(r, 15_000));
+    const probe = spawnSync("gh", ["pr", "checks", url], { encoding: "utf8" });
+    hasChecks = !/no checks reported/i.test(`${probe.stdout}${probe.stderr}`);
+  }
+  if (!hasChecks) {
+    console.log(`No CI checks started for ${url}. Do not merge. Stopping the loop.`);
+    process.exitCode = 1;
+    break;
+  }
+  const watch = spawnSync("gh", ["pr", "checks", url, "--watch", "--fail-fast"], { stdio: "inherit", timeout: 30 * 60_000 });
+  if (watch.status !== 0) {
+    console.log(`CI failed for ${url}. Do not merge. Stopping the loop.`);
+    process.exitCode = 1;
+    break;
   }
   sh("gh", ["pr", "merge", url, "--squash", "--delete-branch"]);
   const state = sh("gh", ["issue", "view", String(issue.number), "--json", "state", "--jq", ".state"]);
