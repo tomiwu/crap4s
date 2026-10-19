@@ -10,23 +10,27 @@ object CyclomaticComplexity:
   private val BooleanOperators: Set[String] = Set("&&", "||")
 
   def of(body: Option[TermTree])(using Context): Int =
-    1 + count(body)
+    1 + count(body, inUnit = false)
 
-  private def count(node: Any)(using Context): Int =
-    node match
-      case _: Inlined                       => 0
-      case defDef: DefDef if isSynthetic(defDef) => 0
-      case tree: Tree                       => own(tree) + sum(tree.productIterator)
-      case items: IterableOnce[?]           => sum(items.iterator)
-      case Left(value)                      => count(value)
-      case Right(value)                     => count(value)
-      case _                                => 0
+  def ofUnit(unit: LoadedMethod)(using Context): Int =
+    1 + count(unit.body, inUnit = unit.kind == UnitKind.Lambda)
 
-  private def sum(nodes: Iterator[Any])(using Context): Int =
-    nodes.map(count).sum
-
-  private def isSynthetic(defDef: DefDef): Boolean =
+  def isSynthetic(defDef: DefDef): Boolean =
     defDef.symbol.isSynthetic && !defDef.name.toString.startsWith("$anonfun")
+
+  private def count(node: Any, inUnit: Boolean)(using Context): Int =
+    node match
+      case _: Inlined                            => 0
+      case defDef: DefDef if isSynthetic(defDef) => 0
+      case _: DefDef if !inUnit                  => 0
+      case tree: Tree => own(tree) + sum(tree.productIterator, inUnit)
+      case items: IterableOnce[?]                => sum(items.iterator, inUnit)
+      case Left(value)                           => count(value, inUnit)
+      case Right(value)                          => count(value, inUnit)
+      case _                                     => 0
+
+  private def sum(nodes: Iterator[Any], inUnit: Boolean)(using Context): Int =
+    nodes.map(count(_, inUnit)).sum
 
   private def own(tree: Tree)(using Context): Int =
     tree match

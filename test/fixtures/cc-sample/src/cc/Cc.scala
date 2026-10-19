@@ -52,6 +52,20 @@ object Cc:
   def nestedLambda(xs: List[Int]): List[Int] =
     xs.map(x => if x > 0 then x else 0)
 
+  def simpleLambda(xs: List[Int]): List[Int] =
+    xs.map(_ + 1)
+
+  def lambdaInLambda(xs: List[Int]): List[Int] =
+    xs.map(x => if x > 0 then List(x).map(y => if y > 1 then y else 0).sum else 0)
+
+  def localDefBranchy(a: Int): Int =
+    def helper(b: Int): Int = if b > 0 then 1 else 2
+    helper(a)
+
+  def localDefSimple(a: Int): Int =
+    def helper(b: Int): Int = b + 1
+    helper(a)
+
   inline def inlineIf(a: Int): Int =
     if a > 0 then 1 else 2
 

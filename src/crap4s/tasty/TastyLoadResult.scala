@@ -8,6 +8,9 @@ enum TopLevelKind:
 
 final case class TopLevelDecl(name: String, kind: TopLevelKind)
 
+enum UnitKind:
+  case Method, Lambda
+
 final case class MethodPosition(
     sourceFile: String,
     startOffset: Int,
@@ -19,7 +22,8 @@ final case class LoadedMethod(
     owner: String,
     name: String,
     position: MethodPosition,
-    body: Option[TermTree]
+    body: Option[TermTree],
+    kind: UnitKind = UnitKind.Method
 )
 
 final case class TastyLoadResult(
