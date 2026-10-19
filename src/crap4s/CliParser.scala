@@ -6,7 +6,7 @@ import java.nio.file.Path
 object CliParser:
 
   def parse(args: List[String]): Either[String, CliConfig] =
-    readFlags(args).flatMap(validateRequired).flatMap(validateDirectories)
+    readFlags(args).flatMap(toConfig)
 
   private case class Flags(
       tasty: Option[String],
@@ -16,7 +16,7 @@ object CliParser:
   )
 
   private def readFlags(args: List[String]): Either[String, Flags] =
-    parseLoop(args, Flags(None, None, 6.0, false))
+    parseLoop(args, Flags(None, None, CliConfig.DefaultThreshold, false))
 
   private def parseLoop(rest: List[String], flags: Flags): Either[String, Flags] =
     rest match
@@ -35,20 +35,14 @@ object CliParser:
   private def parseThreshold(value: String): Either[String, Double] =
     value.toDoubleOption.toRight(s"Invalid threshold: $value")
 
-  private def validateRequired(flags: Flags): Either[String, (String, String, Double, Boolean)] =
-    (flags.tasty, flags.coverage) match
-      case (Some(t), Some(c)) => Right((t, c, flags.threshold, flags.all))
-      case (None, _)          => Left("Missing required option: --tasty")
-      case (_, None)          => Left("Missing required option: --coverage")
+  private def toConfig(flags: Flags): Either[String, CliConfig] =
+    for
+      tasty <- flags.tasty.toRight("Missing required option: --tasty")
+      coverage <- flags.coverage.toRight("Missing required option: --coverage")
+      _ <- requireDirectory(tasty)
+      _ <- requireDirectory(coverage)
+    yield CliConfig(tasty, coverage, flags.threshold, flags.all)
 
-  private def validateDirectories(
-      data: (String, String, Double, Boolean)
-  ): Either[String, CliConfig] =
-    val (tasty, coverage, threshold, all) = data
-    if !isExistingDirectory(tasty) then Left(s"Directory does not exist: $tasty")
-    else if !isExistingDirectory(coverage) then Left(s"Directory does not exist: $coverage")
-    else Right(CliConfig(tasty, coverage, threshold, all))
-
-  private def isExistingDirectory(path: String): Boolean =
-    val p = Path.of(path)
-    Files.isDirectory(p)
+  private def requireDirectory(path: String): Either[String, Unit] =
+    if Files.isDirectory(Path.of(path)) then Right(())
+    else Left(s"Directory does not exist: $path")

@@ -8,3 +8,6 @@ final case class CliConfig(
 ):
   def debugLine: String =
     s"tasty=$tastyDir coverage=$coverageDir threshold=$threshold all=$all"
+
+object CliConfig:
+  val DefaultThreshold: Double = 6.0

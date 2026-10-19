@@ -6,9 +6,10 @@ package crap4s
       Console.err.println(message)
       sys.exit(1)
     case Right(config) =>
-      if isDebugMode then println(config.debugLine)
+      if Crap4sDebug.enabled then println(config.debugLine)
       sys.exit(0)
 
-private def isDebugMode: Boolean =
-  val value = System.getenv("CRAP4S_DEBUG")
-  value != null && value != "0" && !value.equalsIgnoreCase("false")
+private object Crap4sDebug:
+  def enabled: Boolean =
+    Option(System.getenv("CRAP4S_DEBUG"))
+      .exists(v => v != "0" && !v.equalsIgnoreCase("false"))
