@@ -17,7 +17,7 @@ object LoadedMethodBuilder:
       case _ => Nil
 
   private def isUserMethod(method: TermSymbol): Boolean =
-    method.name != nme.Constructor
+    method.name != nme.Constructor && !method.isSynthetic
 
   private def fromDefTree(owner: String, name: String, tree: DefDef)(using
       Context

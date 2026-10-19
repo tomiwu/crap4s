@@ -78,3 +78,25 @@ class CyclomaticComplexityTest extends FunSuite:
 
   test("local def with CC 1 is not a unit"):
     assertEquals(units("localDefSimple"), Nil)
+
+class SyntheticCodeTest extends FunSuite:
+
+  private lazy val loaded: TastyLoadResult =
+    val fixture = Path.of("test/fixtures/synthetic-sample").toAbsolutePath.normalize
+    val out = Files.createTempDirectory("crap4s-synth")
+    val code = Process(Seq("scala-cli", "compile", fixture.toString, "-d", out.toString, "-S", "3.10.0")).!
+    assertEquals(code, 0)
+    TastyLoader.load(out).toOption.get
+
+  test("only user code is a unit"):
+    val names = loaded.methods.map(m => s"${m.owner}.${m.name}").toSet
+    assertEquals(
+      names,
+      Set("synth.Point.norm", "synth.Color.isRed", "synth.Synth.twice", "synth.Synth.callsTwice")
+    )
+
+  test("inline def has its own CC and the call site does not add it"):
+    val byName = loaded.methods.map(m => m.name -> m).toMap
+    given tastyquery.Contexts.Context = loaded.context
+    assertEquals(CyclomaticComplexity.of(byName("twice").body), 2)
+    assertEquals(CyclomaticComplexity.of(byName("callsTwice").body), 1)
