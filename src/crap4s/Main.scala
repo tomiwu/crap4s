@@ -1,5 +1,6 @@
 package crap4s
 
+import crap4s.coverage.CoverageLoader
 import crap4s.tasty.TastyLoader
 
 import java.nio.file.Path
@@ -14,6 +15,14 @@ import java.nio.file.Path
 
 private def runWithConfig(config: CliConfig): Unit =
   TastyLoader.load(Path.of(config.tastyDir)) match
+    case Left(message) =>
+      Console.err.println(message)
+      sys.exit(1)
+    case Right(_) =>
+      loadCoverage(config)
+
+private def loadCoverage(config: CliConfig): Unit =
+  CoverageLoader.load(Path.of(config.coverageDir)) match
     case Left(message) =>
       Console.err.println(message)
       sys.exit(1)
