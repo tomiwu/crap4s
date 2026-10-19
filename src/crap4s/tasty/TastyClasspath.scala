@@ -9,7 +9,7 @@ object TastyClasspath:
   val JreLabel: String = "jrt:/"
 
   def jreModulePath: Path =
-    FileSystems.getFileSystem(URI.create("jrt:/")).getPath("modules", "java.base")
+    FileSystems.getFileSystem(URI.create(JreLabel)).getPath("modules", "java.base")
 
   def normalizedTastyDir(tastyDir: Path): Path =
     tastyDir.toAbsolutePath.normalize

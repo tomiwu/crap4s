@@ -19,13 +19,12 @@ object LoadedMethodBuilder:
   private def isUserMethod(method: TermSymbol): Boolean =
     method.name != nme.Constructor
 
-  private def fromDefTree(owner: String, name: String, tree: DefDef)(using Context): List[LoadedMethod] =
-    tree.resultTpt.toType
-    val record =
+  private def fromDefTree(owner: String, name: String, tree: DefDef): List[LoadedMethod] =
+    List(
       LoadedMethod(
         owner = owner,
         name = name,
         position = MethodPositionBuilder.fromSourcePosition(tree.pos),
         body = tree.rhs
       )
-    List(record)
+    )
