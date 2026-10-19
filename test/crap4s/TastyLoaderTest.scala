@@ -35,7 +35,7 @@ class TastyLoaderTest extends FunSuite:
     val out = Files.createTempDirectory("crap4s-classpath")
     compileFixture(out)
     val result = loadCompiled(out)
-    val tastyLabel = out.toAbsolutePath.normalize.toString
+    val tastyLabel = TastyClasspath.normalizedTastyDir(out).toString
     assert(result.classpathEntries.contains(tastyLabel))
     assert(result.classpathEntries.contains(TastyClasspath.JreLabel))
 

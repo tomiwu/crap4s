@@ -6,10 +6,13 @@ import tastyquery.Symbols.TermOrTypeSymbol
 
 object TopLevelDeclBuilder:
 
+  def isTopLevelClass(cls: ClassSymbol): Boolean =
+    cls.owner.isPackage
+
   def fromSymbol(sym: TermOrTypeSymbol)(using Context): Option[TopLevelDecl] =
     sym match
-      case cls: ClassSymbol if cls.owner.isPackage => Some(fromClass(cls))
-      case _                                       => None
+      case cls: ClassSymbol if isTopLevelClass(cls) => Some(fromClass(cls))
+      case _                                        => None
 
   def topLevelName(cls: ClassSymbol): String =
     val full = cls.displayFullName

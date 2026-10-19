@@ -12,7 +12,7 @@ object TastyLoader:
   def load(tastyDir: Path): Either[String, TastyLoadResult] =
     val labels = TastyClasspath.entryLabels(tastyDir)
     val classpath = ClasspathLoaders.read(TastyClasspath.paths(tastyDir))
-    val ctx = tastyquery.Contexts.Context.initialize(classpath)
+    val ctx = Context.initialize(classpath)
     given Context = ctx
     val symbols = ctx.findSymbolsByClasspathEntry(classpath.head).toList
     val topLevels = symbols.flatMap(TopLevelDeclBuilder.fromSymbol)
@@ -21,7 +21,7 @@ object TastyLoader:
 
   private def methodsFromTopLevel(sym: TermOrTypeSymbol)(using Context): List[LoadedMethod] =
     sym match
-      case cls: ClassSymbol if cls.owner.isPackage =>
+      case cls: ClassSymbol if TopLevelDeclBuilder.isTopLevelClass(cls) =>
         val owner = TopLevelDeclBuilder.topLevelName(cls)
         cls.declarations.flatMap(LoadedMethodBuilder.fromOwner(owner, _))
       case _ => Nil

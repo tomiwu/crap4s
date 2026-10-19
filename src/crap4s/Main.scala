@@ -6,20 +6,19 @@ import java.nio.file.Path
 
 @main def crap(args: String*): Unit =
   CliParser.parse(args.toList) match
-    case Left(message) =>
-      Console.err.println(message)
-      sys.exit(1)
-    case Right(config) =>
-      runWithConfig(config)
+    case Left(message) => exitWithError(message)
+    case Right(config) => runWithConfig(config)
 
 private def runWithConfig(config: CliConfig): Unit =
   TastyLoader.load(Path.of(config.tastyDir)) match
-    case Left(message) =>
-      Console.err.println(message)
-      sys.exit(1)
+    case Left(message) => exitWithError(message)
     case Right(_) =>
       if Crap4sDebug.enabled then println(config.debugLine)
       sys.exit(0)
+
+private def exitWithError(message: String): Unit =
+  Console.err.println(message)
+  sys.exit(1)
 
 private object Crap4sDebug:
   def enabled: Boolean =
