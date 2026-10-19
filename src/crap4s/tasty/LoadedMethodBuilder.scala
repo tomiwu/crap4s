@@ -9,15 +9,19 @@ import tastyquery.Trees.DefDef
 object LoadedMethodBuilder:
 
   def fromOwner(owner: String, term: TermOrTypeSymbol)(using Context): List[LoadedMethod] =
+    for
+      method <- userMethod(term).toList
+      defTree <- method.tree.collect { case defDef: DefDef => defDef }.toList
+      unit <- fromDefTree(owner, method.name.toString, defTree)
+    yield unit
+
+  private def userMethod(term: TermOrTypeSymbol): Option[TermSymbol] =
     term match
-      case method: TermSymbol if method.isMethod && isUserMethod(method) =>
-        method.tree match
-          case Some(defTree: DefDef) => fromDefTree(owner, method.name.toString, defTree)
-          case _                     => Nil
-      case _ => Nil
+      case method: TermSymbol if isUserMethod(method) => Some(method)
+      case _                                          => None
 
   private def isUserMethod(method: TermSymbol): Boolean =
-    method.name != nme.Constructor && !method.isSynthetic
+    method.isMethod && method.name != nme.Constructor && !method.isSynthetic
 
   private def fromDefTree(owner: String, name: String, tree: DefDef)(using
       Context
