@@ -19,9 +19,8 @@ object CoverageReportParser:
     checkVersion(lines).flatMap(_ => parseRecords(lines, baseDir))
 
   private def checkVersion(lines: List[String]): Either[String, Unit] =
-    lines.headOption.map(_.stripPrefix(VersionPrefix)) match
-      case Some(SupportedVersion) if lines.head.startsWith(VersionPrefix) => Right(())
-      case _ => Left(s"Damaged scoverage.coverage: expected '$VersionPrefix$SupportedVersion' on line 1")
+    val expected = VersionPrefix + SupportedVersion
+    Either.cond(lines.headOption.contains(expected), (), s"Damaged scoverage.coverage: expected '$expected' on line 1")
 
   private def parseRecords(
       lines: List[String],
