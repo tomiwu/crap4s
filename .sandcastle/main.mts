@@ -1,8 +1,8 @@
 // crap4s Sandcastle loop: implement -> review -> check -> PR -> merge.
 //
 // For each iteration, the host does these steps:
-//   1. Select the lowest-numbered open issue with the "Sandcastle" label
-//      that has no open "Blocked by #N" issue.
+//   1. Select the open issue with the "Sandcastle" label that has no open
+//      "Blocked by #N" issue. Take the highest priority label, then the lowest number.
 //   2. Create a sandbox on the branch "sandcastle/issue-<N>".
 //   3. Run the implementer agent, then the reviewer agent.
 //   4. Run the checks in the sandbox: `scala-cli test .` and, if it exists,
@@ -78,11 +78,20 @@ function sh(cmd: string, args: string[]): string {
   return execFileSync(cmd, args, { encoding: "utf8", stdio: ["ignore", "pipe", "inherit"] }).trim();
 }
 
-interface Issue { number: number; title: string; body: string }
+interface Issue { number: number; title: string; body: string; labels: { name: string }[] }
+
+// Priority from labels. An issue without a priority label is medium.
+const PRIORITY: Record<string, number> = {
+  "priority: critical": 0, "priority: high": 1, "priority: medium": 2, "priority: low": 3,
+};
+function priority(issue: Issue): number {
+  const values = issue.labels.map((l) => PRIORITY[l.name]).filter((v) => v !== undefined);
+  return values.length ? Math.min(...values) : PRIORITY["priority: medium"];
+}
 
 function nextIssue(merged: Set<number>): Issue | undefined {
   const open: Issue[] = JSON.parse(
-    sh("gh", ["issue", "list", "--state", "open", "--label", LABEL, "--limit", "100", "--json", "number,title,body"]),
+    sh("gh", ["issue", "list", "--state", "open", "--label", LABEL, "--limit", "100", "--json", "number,title,body,labels"]),
   );
   const openNumbers = new Set(open.map((i) => i.number).filter((n) => !merged.has(n)));
   open.splice(0, open.length, ...open.filter((i) => !merged.has(i.number) && !SKIP.has(i.number)));
@@ -91,7 +100,8 @@ function nextIssue(merged: Set<number>): Issue | undefined {
       .flatMap((m) => [...m[1].matchAll(/#(\d+)/g)].map((n) => Number(n[1])));
     return blockers.every((b) => !openNumbers.has(b));
   });
-  ready.sort((a, b) => a.number - b.number);
+  // Highest priority first, then lowest number. The loop reads the labels again before each iteration.
+  ready.sort((a, b) => priority(a) - priority(b) || a.number - b.number);
   if (open.length && !ready.length) console.log("All open issues are blocked.");
   // The issue list can be stale just after a merge. Check the state of the issue again.
   return ready.find((i) => sh("gh", ["issue", "view", String(i.number), "--json", "state", "--jq", ".state"]) === "OPEN");

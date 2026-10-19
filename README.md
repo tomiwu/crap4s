@@ -6,11 +6,27 @@ crap4s calculates the CRAP score (Change Risk Anti-Patterns, by Robert C. Martin
 
 Sandcastle runs an AI agent in a Podman container. The agent does one GitHub issue (label `Sandcastle`) in each iteration. The loop does these steps for each issue:
 
-1. Select the lowest-numbered open issue that has no open "Blocked by #N" issue.
+1. Select an open issue that has no open "Blocked by #N" issue. Select the highest priority first. If two issues have the same priority, select the lower number.
 2. Implement the issue on a new branch. Then review the change.
 3. Run `scala-cli test .`. If `scripts/self-crap.sh` exists, run it. Each unit must have a CRAP score less than 4.
 4. If a check fails, let the agent fix the code (3 attempts maximum). If the checks still fail, stop the loop.
 5. Open a PR. Wait until all GitHub Actions checks pass. Then squash-merge the PR and close the issue. If no check starts or a check fails, do not merge. Stop the loop.
+
+### Priority
+
+Use one of these labels: `priority: critical`, `priority: high`, `priority: medium`, `priority: low`. An issue without a priority label is medium. The loop reads the labels before each iteration. The loop does not stop an issue that is in progress.
+
+To set the priority of issue N:
+
+```sh
+gh issue edit N --add-label 'priority: high'
+```
+
+To change the priority, also remove the old label:
+
+```sh
+gh issue edit N --remove-label 'priority: medium' --add-label 'priority: high'
+```
 
 ### Prerequisites
 
