@@ -15,7 +15,7 @@
 
 import * as sandcastle from "@ai-hero/sandcastle";
 import { podman } from "@ai-hero/sandcastle/sandboxes/podman";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 
 const MAX_ITERATIONS = Number(process.env.MAX_ITERATIONS ?? "10");
 const MAX_FIX_ATTEMPTS = Number(process.env.MAX_FIX_ATTEMPTS ?? "3");
@@ -117,11 +117,11 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     "--title", issue.title,
     "--body", `This PR implements #${issue.number}.\n\nThe checks pass: \`scala-cli test .\` and the CRAP self-check (if available).\n\nCloses #${issue.number}`]);
   console.log(`PR: ${url}`);
-  try {
-    execFileSync("gh", ["pr", "checks", url, "--watch", "--fail-fast"], { stdio: "inherit", timeout: 30 * 60_000 });
-  } catch {
-    const checks = sh("gh", ["pr", "checks", url]).toString();
-    if (!/no checks/i.test(checks)) {
+  const probe = spawnSync("gh", ["pr", "checks", url], { encoding: "utf8" });
+  const noChecks = /no checks reported/i.test(`${probe.stdout}${probe.stderr}`);
+  if (!noChecks) {
+    const watch = spawnSync("gh", ["pr", "checks", url, "--watch", "--fail-fast"], { stdio: "inherit", timeout: 30 * 60_000 });
+    if (watch.status !== 0) {
       console.log(`CI failed for ${url}. Stopping the loop.`);
       process.exitCode = 1;
       break;
