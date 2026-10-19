@@ -17,7 +17,7 @@ object TastyLoader:
     val symbols = ctx.findSymbolsByClasspathEntry(classpath.head).toList
     val topLevels = symbols.flatMap(TopLevelDeclBuilder.fromSymbol)
     val methods = symbols.flatMap(methodsFromTopLevel)
-    Right(TastyLoadResult(labels, topLevels, methods))
+    Right(TastyLoadResult(labels, topLevels, methods, ctx))
 
   private def methodsFromTopLevel(sym: TermOrTypeSymbol)(using Context): List[LoadedMethod] =
     sym match

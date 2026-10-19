@@ -56,3 +56,15 @@ object Cc:
     if a > 0 then 1 else 2
 
   def callsInline(a: Int): Int = inlineIf(a)
+
+  def andChain(a: Boolean, b: Boolean): Boolean = a && b
+
+  def orChain(a: Boolean, b: Boolean, c: Boolean): Boolean = a || b || c
+
+  def ifAnd(a: Boolean, b: Boolean): Int =
+    if a && b then 1 else 2
+
+  def userOperator(a: Flag, b: Flag): Flag = a && b
+
+  final case class Flag(on: Boolean):
+    def &&(other: Flag): Flag = Flag(on && other.on)

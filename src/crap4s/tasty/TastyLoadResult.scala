@@ -1,5 +1,6 @@
 package crap4s.tasty
 
+import tastyquery.Contexts.Context
 import tastyquery.Trees.TermTree
 
 enum TopLevelKind:
@@ -24,5 +25,6 @@ final case class LoadedMethod(
 final case class TastyLoadResult(
     classpathEntries: List[String],
     topLevels: List[TopLevelDecl],
-    methods: List[LoadedMethod]
+    methods: List[LoadedMethod],
+    context: Context
 )

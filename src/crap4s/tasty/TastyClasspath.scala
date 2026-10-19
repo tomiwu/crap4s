@@ -17,5 +17,8 @@ object TastyClasspath:
   def entryLabels(tastyDir: Path): List[String] =
     List(normalizedTastyDir(tastyDir).toString, JreLabel)
 
+  def scalaLibraryPath: Path =
+    Path.of(classOf[scala.Predef.type].getProtectionDomain.getCodeSource.getLocation.toURI)
+
   def paths(tastyDir: Path): List[Path] =
-    List(normalizedTastyDir(tastyDir), jreModulePath)
+    List(normalizedTastyDir(tastyDir), jreModulePath, scalaLibraryPath)
