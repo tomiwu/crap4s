@@ -182,13 +182,20 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     process.exitCode = 1;
     break;
   }
-  const watch = spawnSync("gh", ["pr", "checks", url, "--watch", "--fail-fast"], { stdio: "inherit", timeout: 30 * 60_000 });
-  if (watch.status !== 0) {
-    console.log(`CI failed for ${url}. Do not merge. Stopping the loop.`);
+  // main requires the check "test" on an up-to-date branch. Update the branch and retry.
+  let mergedOk = false;
+  for (let attempt = 0; attempt < 3 && !mergedOk; attempt++) {
+    spawnSync("gh", ["pr", "update-branch", url], { stdio: "inherit" });
+    await new Promise((r) => setTimeout(r, 20_000));
+    const watch = spawnSync("gh", ["pr", "checks", url, "--watch", "--fail-fast"], { stdio: "inherit", timeout: 30 * 60_000 });
+    if (watch.status !== 0) break;
+    mergedOk = spawnSync("gh", ["pr", "merge", url, "--squash", "--delete-branch"], { stdio: "inherit" }).status === 0;
+  }
+  if (!mergedOk) {
+    console.log(`CI failed or the merge failed for ${url}. Do not merge. Stopping the loop.`);
     process.exitCode = 1;
     break;
   }
-  sh("gh", ["pr", "merge", url, "--squash", "--delete-branch"]);
   const state = sh("gh", ["issue", "view", String(issue.number), "--json", "state", "--jq", ".state"]);
   if (state !== "CLOSED") sh("gh", ["issue", "close", String(issue.number), "--comment", `Merged in ${url}.`]);
   console.log(`Merged ${url}. Issue #${issue.number} is closed.`);
