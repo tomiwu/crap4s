@@ -44,12 +44,18 @@ Review the code changes on branch `{{BRANCH}}` and improve code clarity, consist
 
 7. **Preserve functionality**: Never change what the code does - only how it does it. All original features, outputs, and behaviors must remain intact.
 
+# RULES
+
+- Every unit must have a CRAP score less than 4. Make methods small and well tested.
+- Do not push. Do not open a PR. Do not close the issue.
+- Do not edit `docs/PRD.md`, `.sandcastle/` or `.github/`.
+
 # EXECUTION
 
 If you find improvements to make:
 
 1. Make the changes directly on this branch
-2. Run `scala-cli compile .` and `scala-cli test .` to ensure nothing is broken
+2. Run `scala-cli compile .`, `scala-cli test .` and, if it exists, `scripts/self-crap.sh` to ensure nothing is broken
 3. Commit describing the refinements. Write the commit message in English, in ASD-STE100 Simplified Technical English.
 
 If the code is already clean and well-structured, do nothing.
