@@ -11,15 +11,57 @@
 //   6. Push the branch, open a PR, wait for CI, squash-merge, close the issue.
 // The loop stops when no issue is ready, or when an issue cannot pass.
 //
-// Usage: MAX_ITERATIONS=10 npx tsx .sandcastle/main.mts
+// Usage:
+//   AGENT=cursor MAX_ITERATIONS=10 npx tsx .sandcastle/main.mts   (Cursor, Composer 2.5 Fast)
+//   AGENT=claude MAX_ITERATIONS=10 npx tsx .sandcastle/main.mts   (Claude Code, Sonnet 5.5)
+// If the Cursor agent fails because of credits or limits, the loop changes to Claude.
 
 import * as sandcastle from "@ai-hero/sandcastle";
 import { podman } from "@ai-hero/sandcastle/sandboxes/podman";
 import { execFileSync, spawnSync } from "node:child_process";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 
 const MAX_ITERATIONS = Number(process.env.MAX_ITERATIONS ?? "10");
 const MAX_FIX_ATTEMPTS = Number(process.env.MAX_FIX_ATTEMPTS ?? "3");
-const MODEL = process.env.SANDCASTLE_MODEL ?? "composer-2";
+let agentName = (process.env.AGENT ?? "cursor") === "claude" ? "claude" : "cursor";
+const CURSOR_MODEL = process.env.CURSOR_MODEL ?? "composer-2.5-fast";
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL ?? "claude-sonnet-5-5";
+const LIMIT_ERROR = /credit|quota|usage limit|rate limit|payment|out of (fast )?requests|insufficient/i;
+
+function agent() {
+  return agentName === "claude" ? sandcastle.claudeCode(CLAUDE_MODEL) : sandcastle.cursor(CURSOR_MODEL);
+}
+
+type RunOptions = Omit<Parameters<sandcastle.Sandbox["run"]>[0], "agent">;
+
+// Run one agent phase. Change from Cursor to Claude if Cursor has no credits.
+async function runPhase(sandbox: sandcastle.Sandbox, options: RunOptions) {
+  try {
+    const result = await sandbox.run({ ...options, agent: agent() });
+    if (agentName === "cursor" && !result.commits.length && logHasLimitError(options.name)) throw new Error("cursor limit");
+    return result;
+  } catch (error) {
+    const text = `${error}`;
+    if (agentName === "cursor" && (LIMIT_ERROR.test(text) || logHasLimitError(options.name))) {
+      console.log(`Cursor failed (${text.slice(0, 200)}). Change to Claude Code and run again.`);
+      agentName = "claude";
+      return sandbox.run({ ...options, agent: agent() });
+    }
+    throw error;
+  }
+}
+
+function logHasLimitError(name?: string): boolean {
+  try {
+    const dir = ".sandcastle/logs";
+    const files = readdirSync(dir).filter((f) => name && f.endsWith(`-${name}.log`))
+      .map((f) => join(dir, f)).sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs);
+    return files.length > 0 && LIMIT_ERROR.test(readFileSync(files[0], "utf8").slice(-4000));
+  } catch {
+    return false;
+  }
+}
 const LABEL = "Sandcastle";
 
 const hooks = {
@@ -48,7 +90,8 @@ function nextIssue(): Issue | undefined {
   });
   ready.sort((a, b) => a.number - b.number);
   if (open.length && !ready.length) console.log("All open issues are blocked.");
-  return ready[0];
+  // The issue list can be stale just after a merge. Check the state of the issue again.
+  return ready.find((i) => sh("gh", ["issue", "view", String(i.number), "--json", "state", "--jq", ".state"]) === "OPEN");
 }
 
 async function runChecks(sandbox: sandcastle.Sandbox): Promise<{ ok: boolean; log: string }> {
@@ -65,26 +108,30 @@ async function runChecks(sandbox: sandcastle.Sandbox): Promise<{ ok: boolean; lo
   return { ok, log };
 }
 
+const merged = new Set<number>();
+console.log(`Agent: ${agentName}`);
+
 for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   sh("git", ["checkout", "main"]);
   sh("git", ["pull", "--rebase", "origin", "main"]);
   const issue = nextIssue();
+  if (issue && merged.has(issue.number)) { console.log(`Issue #${issue.number} is already merged. Stopping.`); break; }
   if (!issue) { console.log("No ready issue. Stopping."); break; }
   console.log(`\n=== Iteration ${iteration}/${MAX_ITERATIONS}: issue #${issue.number} ${issue.title} ===\n`);
 
-  const branch = `sandcastle/issue-${issue.number}`;
+  const branch = `sandcastle/issue-${issue.number}-${Date.now()}`;
   const sandbox = await sandcastle.createSandbox({ branch, sandbox: podman(), hooks });
   const args = { ISSUE: String(issue.number), BRANCH: branch };
   let passed = false;
   try {
-    const implement = await sandbox.run({
-      name: "implementer", maxIterations: 1, agent: sandcastle.cursor(MODEL),
+    const implement = await runPhase(sandbox, {
+      name: "implementer", maxIterations: 1,
       promptFile: "./.sandcastle/implement-prompt.md", promptArgs: args,
     });
     if (!implement.commits.length) { console.log(`No commits for #${issue.number}. Stopping.`); break; }
 
-    await sandbox.run({
-      name: "reviewer", maxIterations: 1, agent: sandcastle.cursor(MODEL),
+    await runPhase(sandbox, {
+      name: "reviewer", maxIterations: 1,
       promptFile: "./.sandcastle/review-prompt.md", promptArgs: args,
     });
 
@@ -93,8 +140,8 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
       if (result.ok) { passed = true; break; }
       console.log(`Checks failed for #${issue.number} (attempt ${attempt}).`);
       if (attempt === MAX_FIX_ATTEMPTS) break;
-      await sandbox.run({
-        name: `fixer-${attempt + 1}`, maxIterations: 1, agent: sandcastle.cursor(MODEL),
+      await runPhase(sandbox, {
+        name: `fixer-${attempt + 1}`, maxIterations: 1,
         promptFile: "./.sandcastle/fix-prompt.md",
         promptArgs: { ...args, CHECK_LOG: result.log.slice(-12000) },
       });
@@ -131,6 +178,8 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   const state = sh("gh", ["issue", "view", String(issue.number), "--json", "state", "--jq", ".state"]);
   if (state !== "CLOSED") sh("gh", ["issue", "close", String(issue.number), "--comment", `Merged in ${url}.`]);
   console.log(`Merged ${url}. Issue #${issue.number} is closed.`);
+  spawnSync("git", ["branch", "-D", branch]);
+  merged.add(issue.number);
 }
 
 console.log("\nAll done.");
