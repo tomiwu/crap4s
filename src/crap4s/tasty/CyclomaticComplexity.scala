@@ -23,7 +23,7 @@ object CyclomaticComplexity:
       case _: Inlined                            => 0
       case defDef: DefDef if isSynthetic(defDef) => 0
       case _: DefDef if !inUnit                  => 0
-      case tree: Tree => own(tree) + sum(tree.productIterator, inUnit)
+      case tree: Tree                            => own(tree) + sum(tree.productIterator, inUnit)
       case items: IterableOnce[?]                => sum(items.iterator, inUnit)
       case Left(value)                           => count(value, inUnit)
       case Right(value)                          => count(value, inUnit)
