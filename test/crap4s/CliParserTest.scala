@@ -16,21 +16,21 @@ class CliParserTest extends FunSuite:
     val result = CliParser.parse(List("--tasty", tasty, "--coverage", coverage))
     assertEquals(
       result,
-      Right(CliConfig(tasty, coverage, CliConfig.DefaultThreshold, false))
+      Right(CliConfig(List(tasty), List(coverage), Nil, CliConfig.DefaultThreshold, false))
     )
 
   test("parse threshold as integer or decimal"):
     val (tasty, coverage) = existingDirs("threshold")
     assertEquals(
       CliParser.parse(List("--tasty", tasty, "--coverage", coverage, "--threshold", "6.5")),
-      Right(CliConfig(tasty, coverage, 6.5, false))
+      Right(CliConfig(List(tasty), List(coverage), Nil, 6.5, false))
     )
 
   test("parse --all flag"):
     val (tasty, coverage) = existingDirs("all")
     assertEquals(
       CliParser.parse(List("--tasty", tasty, "--coverage", coverage, "--all")),
-      Right(CliConfig(tasty, coverage, CliConfig.DefaultThreshold, true))
+      Right(CliConfig(List(tasty), List(coverage), Nil, CliConfig.DefaultThreshold, true))
     )
 
   test("fail when --tasty is missing"):
@@ -52,6 +52,46 @@ class CliParserTest extends FunSuite:
     val tasty = Files.createTempDirectory("bad-coverage-tasty").toString
     val result = CliParser.parse(List("--tasty", tasty, "--coverage", "/no/such/coverage"))
     assertEquals(result, Left(Error.MissingDirectory("/no/such/coverage")))
+
+  test("--tasty and --coverage can occur more than once"):
+    val (tasty, coverage) = existingDirs("many")
+    val (tasty2, coverage2) = existingDirs("many2")
+    val args = List("--tasty", tasty, "--tasty", tasty2, "--coverage", coverage) ++
+      List("--coverage", coverage2)
+    assertEquals(
+      CliParser.parse(args),
+      Right(
+        CliConfig(
+          List(tasty, tasty2),
+          List(coverage, coverage2),
+          Nil,
+          CliConfig.DefaultThreshold,
+          false
+        )
+      )
+    )
+
+  test("--classpath splits entries at colons and can occur more than once"):
+    val (tasty, coverage) = existingDirs("cp")
+    val result = CliParser.parse(
+      List("--tasty", tasty, "--coverage", coverage, "--classpath", "a:b::c", "--classpath", "d")
+    )
+    assertEquals(result.map(_.classpath), Right(List("a", "b", "c", "d")))
+
+  test("--classpath-file accepts one line or one entry on each line and ignores empty lines"):
+    val (tasty, coverage) = existingDirs("cpfile")
+    val file = Files.writeString(Files.createTempFile("cp", ".txt"), "a:b\n\nc\n  \nd:e\n")
+    val result = CliParser.parse(
+      List("--tasty", tasty, "--coverage", coverage, "--classpath-file", file.toString)
+    )
+    assertEquals(result.map(_.classpath), Right(List("a", "b", "c", "d", "e")))
+
+  test("fail when the --classpath-file file cannot be read"):
+    val (tasty, coverage) = existingDirs("cpbad")
+    val result = CliParser.parse(
+      List("--tasty", tasty, "--coverage", coverage, "--classpath-file", "/no/such/file")
+    )
+    assert(result.left.exists(_.message.startsWith("Cannot read /no/such/file")), result.toString)
 
   test("an error has a readable message"):
     assertEquals(Error.UnknownOption("--x").message, "Unknown option: --x")

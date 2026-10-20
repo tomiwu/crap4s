@@ -1,8 +1,9 @@
 package crap4s
 
 final case class CliConfig(
-    tastyDir: String,
-    coverageDir: String,
+    tastyDirs: List[String],
+    coverageDirs: List[String],
+    classpath: List[String],
     threshold: Double,
     all: Boolean
 )
