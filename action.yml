@@ -1,0 +1,52 @@
+name: crap4s
+description: Install crap4s from a GitHub Release and fail the step if a unit has a CRAP score above the threshold.
+inputs:
+  tasty:
+    description: Directories with TASTy files. Separate directories with a space.
+    required: true
+  coverage:
+    description: Directories with the -coverage-out data. Separate directories with a space.
+    required: true
+  classpath-file:
+    description: File with the dependency classpath. Leave empty for no classpath.
+    required: false
+    default: ""
+  threshold:
+    description: Fail if a unit has a CRAP score above this number.
+    required: false
+    default: "6"
+  version:
+    description: Release tag of crap4s, for example v0.1.0. Use latest for the newest release.
+    required: false
+    default: latest
+runs:
+  using: composite
+  steps:
+    - name: Install crap4s
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        CRAP4S_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        bin="$RUNNER_TEMP/crap4s-bin"
+        mkdir -p "$bin"
+        tag_args=()
+        if [ "$CRAP4S_VERSION" != "latest" ]; then tag_args=("$CRAP4S_VERSION"); fi
+        gh release download "${tag_args[@]}" --repo tomiwu/crap4s --pattern crap4s --dir "$bin" --clobber
+        chmod +x "$bin/crap4s"
+        echo "$bin" >> "$GITHUB_PATH"
+    - name: Run crap4s
+      shell: bash
+      env:
+        CRAP4S_TASTY: ${{ inputs.tasty }}
+        CRAP4S_COVERAGE: ${{ inputs.coverage }}
+        CRAP4S_CLASSPATH_FILE: ${{ inputs.classpath-file }}
+        CRAP4S_THRESHOLD: ${{ inputs.threshold }}
+      run: |
+        set -euo pipefail
+        args=(--threshold "$CRAP4S_THRESHOLD")
+        for dir in $CRAP4S_TASTY; do args+=(--tasty "$dir"); done
+        for dir in $CRAP4S_COVERAGE; do args+=(--coverage "$dir"); done
+        if [ -n "$CRAP4S_CLASSPATH_FILE" ]; then args+=(--classpath-file "$CRAP4S_CLASSPATH_FILE"); fi
+        crap4s "${args[@]}"
