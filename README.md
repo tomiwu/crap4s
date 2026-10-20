@@ -208,3 +208,7 @@ AGENT=cursor MAX_ITERATIONS=10 npx tsx .sandcastle/main.mts
 For Claude Code, set `CLAUDE_CODE_OAUTH_TOKEN` (run `claude setup-token`) or `ANTHROPIC_API_KEY` in `.sandcastle/.env`.
 
 If Cursor has no more credits during the loop, the loop changes to Claude Code automatically. Use `CURSOR_MODEL` or `CLAUDE_MODEL` to change the model. Use `SKIP_ISSUES=17,18` to skip issues.
+
+## End-to-end test of the release artifact
+
+`scripts/e2e-release.sh` builds the artifact. It compiles and tests `samples/with-dependency/` with `-coverage-out`. Then it runs crap4s with `--classpath` and checks the CSV. Pass an artifact path to test a downloaded release. The workflow `E2E release` runs the script on `workflow_dispatch` and on tags. It is not a required check.
