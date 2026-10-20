@@ -2,6 +2,19 @@
 
 crap4s calculates the CRAP score (Change Risk Anti-Patterns, by Robert C. Martin) for Scala 3 code. It reads TASTy files with tasty-query. It reads coverage data from the Scala 3 compiler option `-coverage-out`. Refer to `docs/PRD.md` for the specification.
 
+## Install
+
+Java 25 or later must be on the `PATH`. Download the latest release to a directory on the `PATH`:
+
+```sh
+mkdir -p ~/.local/bin
+curl -fL -o ~/.local/bin/crap4s https://github.com/tomiwu/crap4s/releases/latest/download/crap4s
+chmod +x ~/.local/bin/crap4s
+crap4s --help
+```
+
+You can also run the file with `java -jar crap4s`. Refer to `docs/release.md` for the release process.
+
 ## Development loop (Sandcastle)
 
 Sandcastle runs an AI agent in a Podman container. The agent does one GitHub issue (label `Sandcastle`) in each iteration. The loop does these steps for each issue:
