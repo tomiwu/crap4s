@@ -1,6 +1,7 @@
 package crap4s
 
 import munit.FunSuite
+
 import java.nio.file.Files
 
 class CliParserTest extends FunSuite:

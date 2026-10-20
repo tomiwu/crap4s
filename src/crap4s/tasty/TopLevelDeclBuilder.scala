@@ -1,12 +1,11 @@
 package crap4s.tasty
 
-import tastyquery.Contexts.Context
 import tastyquery.Symbols.ClassSymbol
 import tastyquery.Symbols.TermOrTypeSymbol
 
 object TopLevelDeclBuilder:
 
-  def fromSymbol(sym: TermOrTypeSymbol)(using Context): Option[TopLevelDecl] =
+  def fromSymbol(sym: TermOrTypeSymbol): Option[TopLevelDecl] =
     sym match
       case cls: ClassSymbol if cls.owner.isPackage => Some(fromClass(cls))
       case _ => None

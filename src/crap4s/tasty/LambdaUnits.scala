@@ -32,6 +32,6 @@ object LambdaUnits:
       case defDef: DefDef => userDef(defDef)
       case other => TreeChildren.of(other).flatMap(topLevelDefs)
 
-  private def userDef(defDef: DefDef)(using Context): List[DefDef] =
+  private def userDef(defDef: DefDef): List[DefDef] =
     if CyclomaticComplexity.isSynthetic(defDef) then Nil else List(defDef)
 end LambdaUnits
