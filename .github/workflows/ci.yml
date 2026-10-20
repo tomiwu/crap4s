@@ -40,6 +40,9 @@ jobs:
       - name: Run the tests
         run: |
           scala-cli test .
+      - name: Run the CRAP self-check (every unit must have CRAP < 4)
+        run: |
+          scripts/self-crap.sh
   crap:
     runs-on: ubuntu-latest
     steps:
