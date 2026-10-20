@@ -207,7 +207,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   if (!existing) sh("git", ["push", "-f", "origin", branch]);
   const url: string = existing ? existing.url : sh("gh", ["pr", "create", "--base", "main", "--head", branch,
     "--title", issue.title,
-    "--body", `This PR implements #${issue.number}.\n\nThe checks pass: \`scala-cli test .\` and the CRAP self-check (if available).\n\nCloses #${issue.number}`]);
+    "--body", `This PR implements #${issue.number}.\n\n${sh("git", ["log", "--reverse", "--format=%B", `main..${branch}`])}\n\nThe local checks pass: \`scala-cli test .\`, the format check and the CRAP self-check.\n\nCloses #${issue.number}`]);
   console.log(`PR: ${url}`);
   // Merge only when all GitHub Actions checks on the PR pass.
   let hasChecks = false;
