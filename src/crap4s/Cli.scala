@@ -14,6 +14,9 @@ object Cli:
   val ErrorCode: Int = 1
 
   def run(args: List[String], baseDir: Path): Outcome =
+    if args.contains("--help") then Outcome(Usage.text, "", 0) else analyzeArgs(args, baseDir)
+
+  private def analyzeArgs(args: List[String], baseDir: Path): Outcome =
     CliParser
       .parse(args)
       .flatMap(analyze(_, baseDir))

@@ -46,4 +46,13 @@ class CliTest extends FunSuite:
     assertEquals(outcome.code, Cli.ErrorCode)
     assert(outcome.err.contains("Unknown option: --bogus"))
     assertEquals(outcome.out, "")
+
+  test("--help prints the usage and gives code 0"):
+    val outcome = Cli.run(List("--help"), base)
+    assertEquals(outcome.code, 0)
+    assert(outcome.out.startsWith("Usage: crap4s"))
+    assertEquals(outcome.err, "")
+
+  test("--help wins over other options"):
+    assertEquals(Cli.run(List("--bogus", "--help"), base).code, 0)
 end CliTest
