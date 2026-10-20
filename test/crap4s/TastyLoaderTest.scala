@@ -62,3 +62,4 @@ class TastyLoaderTest extends FunSuite:
     val result = loadCompiled(out)
     val greet = result.methods.find(_.name == "greet").getOrElse(fail("missing greet"))
     assertEquals(greet.owner, "sample.Sample")
+end TastyLoaderTest

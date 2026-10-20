@@ -36,3 +36,4 @@ object Demo:
     if n > 10 && n < 20 then n
     else if n > 100 then n - 100
     else 0
+end Demo

@@ -18,7 +18,7 @@ object LoadedMethodBuilder:
   private def userMethod(term: TermOrTypeSymbol): Option[TermSymbol] =
     term match
       case method: TermSymbol if isUserMethod(method) => Some(method)
-      case _                                          => None
+      case _ => None
 
   private def isUserMethod(method: TermSymbol): Boolean =
     method.isMethod && method.name != nme.Constructor && !method.isSynthetic
@@ -33,3 +33,4 @@ object LoadedMethodBuilder:
       body = tree.rhs
     )
     method :: LambdaUnits.of(method)
+end LoadedMethodBuilder

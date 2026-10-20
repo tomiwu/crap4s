@@ -4,6 +4,17 @@ on:
     branches: [main]
   pull_request:
 jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: VirtusLab/scala-cli-setup@v1
+      - name: Check the format
+        run: scala-cli fmt --check .
   test:
     runs-on: ubuntu-latest
     steps:
@@ -15,7 +26,7 @@ jobs:
       - uses: VirtusLab/scala-cli-setup@v1
       - name: Run the tests
         run: |
-          if [ -f project.scala ]; then scala-cli test .; else echo "No project.scala. Skip the tests."; fi
+          scala-cli test .
       - name: Run the CRAP self-check (every unit must have CRAP < 4)
         run: |
-          if [ -x scripts/self-crap.sh ]; then scripts/self-crap.sh; else echo "No scripts/self-crap.sh. Skip the self-check."; fi
+          scripts/self-crap.sh
