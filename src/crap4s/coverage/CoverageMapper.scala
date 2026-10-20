@@ -19,12 +19,14 @@ object CoverageMapper:
       data: CoverageData,
       baseDir: Option[Path]
   ): List[UnitCoverage] =
-    val indexed = units.zipWithIndex.map((unit, i) => (i, key(unit, baseDir), unit))
+    val indexed = units.zipWithIndex.map((unit, i) => IndexedUnit(i, key(unit, baseDir), unit))
     val owned =
       data.statements.flatMap(s => owner(indexed, s, baseDir).map(_ -> s)).groupMap(_._1)(_._2)
-    indexed.map: (i, _, unit) =>
-      val own = owned.getOrElse(i, Nil)
-      UnitCoverage(unit, own.size, own.count(s => data.executedIds.contains(s.id)))
+    indexed.map: entry =>
+      val own = owned.getOrElse(entry.index, Nil)
+      UnitCoverage(entry.unit, own.size, own.count(s => data.executedIds.contains(s.id)))
+
+  final private case class IndexedUnit(index: Int, file: String, unit: LoadedMethod)
 
   private def key(unit: LoadedMethod, baseDir: Option[Path]): String =
     SourcePathNormalizer.normalize(unit.position.sourceFile, baseDir)
@@ -36,13 +38,13 @@ object CoverageMapper:
     unit.position.startOffset <= s.startOffset && s.endOffset <= unit.position.endOffset
 
   private def owner(
-      indexed: List[(Int, String, LoadedMethod)],
+      indexed: List[IndexedUnit],
       s: CoverageStatement,
       baseDir: Option[Path]
   ): Option[Int] =
     val path = SourcePathNormalizer.normalize(s.sourcePath, baseDir)
     indexed
-      .filter((_, file, unit) => file == path && contains(unit, s))
-      .minByOption((_, _, unit) => length(unit))
-      .map(_._1)
+      .filter(e => e.file == path && contains(e.unit, s))
+      .minByOption(e => length(e.unit))
+      .map(_.index)
 end CoverageMapper
