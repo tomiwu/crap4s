@@ -4,6 +4,7 @@ import munit.FunSuite
 
 import java.nio.file.Files
 import java.nio.file.Path
+import scala.jdk.CollectionConverters.*
 import scala.sys.process.*
 
 class WerrorTest extends FunSuite:
@@ -12,9 +13,7 @@ class WerrorTest extends FunSuite:
     Path.of("test/fixtures/werror-sample").toAbsolutePath.normalize
 
   private def optionLines(file: Path): List[String] =
-    Files.readAllLines(
-      file
-    ).toArray.toList.map(_.toString).filter(_.startsWith("//> using options"))
+    Files.readAllLines(file).asScala.toList.filter(_.startsWith("//> using options"))
 
   test("the fixture uses the same compiler options as project.scala"):
     val main = optionLines(Path.of("project.scala"))
