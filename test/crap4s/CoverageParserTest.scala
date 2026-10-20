@@ -72,7 +72,7 @@ class CoverageParserTest extends FunSuite:
     assert(CoverageLoader.load(dir).isLeft)
     Files.writeString(dir.resolve("scoverage.coverage"), header)
     Files.writeString(dir.resolve("scoverage.measurements.1"), "oops\n")
-    assert(CoverageLoader.load(dir).left.exists(_.contains("scoverage.measurements.1")))
+    assert(CoverageLoader.load(dir).left.exists(_.message.contains("scoverage.measurements.1")))
     assert(CoverageLoader.load(dir.resolve("nope")).isLeft)
 
   test("loads a real report from the compiler"):
@@ -92,7 +92,7 @@ class CoverageParserTest extends FunSuite:
     assertEquals(code, 0)
     Files.writeString(cov.resolve("scoverage.measurements.1"), "0\n1\n")
     CoverageLoader.load(cov, Some(Path.of(".").toAbsolutePath)) match
-      case Left(message) => fail(message)
+      case Left(message) => fail(message.message)
       case Right(data) =>
         assert(data.statements.nonEmpty)
         assert(data.statements.exists(_.methodName == "greet"))

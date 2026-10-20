@@ -1,15 +1,15 @@
 package crap4s.coverage
 
+import crap4s.Error
+
 object MeasurementsParser:
   /** Parses the text of one `scoverage.measurements.*` file: one statement id on each line. */
-  def parse(name: String, text: String): Either[String, Set[Int]] =
+  def parse(name: String, text: String): Either[Error, Set[Int]] =
     text.linesIterator.map(_.trim).filter(_.nonEmpty).zipWithIndex.foldLeft(
-      Right(Set.empty): Either[String, Set[Int]]
+      Right(Set.empty): Either[Error, Set[Int]]
     ):
       case (acc, (line, index)) =>
         for
           ids <- acc
-          id <- line.toIntOption.toRight(
-            s"Damaged $name: line ${index + 1} is not a statement id: '$line'"
-          )
+          id <- line.toIntOption.toRight(Error.BadMeasurement(name, index + 1, line))
         yield ids + id

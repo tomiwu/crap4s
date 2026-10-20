@@ -1,5 +1,7 @@
 package crap4s.coverage
 
+import crap4s.Error
+
 import java.nio.file.Path
 
 /**
@@ -14,24 +16,24 @@ object CoverageReportParser:
   private val SupportedVersion = "3.0"
   private val VersionPrefix = "# Coverage data, format version: "
 
-  def parse(text: String, baseDir: Option[Path] = None): Either[String, List[CoverageStatement]] =
+  def parse(text: String, baseDir: Option[Path] = None): Either[Error, List[CoverageStatement]] =
     val lines = text.linesIterator.toList
     checkVersion(lines).flatMap(_ => parseRecords(lines, baseDir))
 
-  private def checkVersion(lines: List[String]): Either[String, Unit] =
+  private def checkVersion(lines: List[String]): Either[Error, Unit] =
     val expected = VersionPrefix + SupportedVersion
     Either.cond(
       lines.headOption.contains(expected),
       (),
-      s"Damaged scoverage.coverage: expected '$expected' on line 1"
+      Error.BadReportVersion(expected)
     )
 
   private def parseRecords(
       lines: List[String],
       baseDir: Option[Path]
-  ): Either[String, List[CoverageStatement]] =
+  ): Either[Error, List[CoverageStatement]] =
     splitRecords(lines.dropWhile(_.startsWith("#"))).zipWithIndex.foldLeft(
-      Right(Nil): Either[String, List[CoverageStatement]]
+      Right(Nil): Either[Error, List[CoverageStatement]]
     ):
       case (acc, (record, index)) =>
         for
@@ -50,26 +52,23 @@ object CoverageReportParser:
       record: List[String],
       number: Int,
       baseDir: Option[Path]
-  ): Either[String, CoverageStatement] =
+  ): Either[Error, CoverageStatement] =
     if record.size < FieldCount then
-      Left(
-        s"Damaged scoverage.coverage: record $number has ${record.size} lines, expected at least $FieldCount"
-      )
+      Left(Error.ShortRecord(number, record.size, FieldCount))
     else
-      toStatement(record, baseDir).left.map(reason =>
-        s"Damaged scoverage.coverage: record $number: $reason"
-      )
+      toStatement(record, number, baseDir)
 
   private def toStatement(
       record: List[String],
+      number: Int,
       baseDir: Option[Path]
-  ): Either[String, CoverageStatement] =
+  ): Either[Error, CoverageStatement] =
     for
-      id <- int(record(0), "id")
-      start <- int(record(7), "start offset")
-      end <- int(record(8), "end offset")
-      line <- int(record(9), "line")
-      branch <- bool(record(12), "is branch")
+      id <- int(record(0), "id", number)
+      start <- int(record(7), "start offset", number)
+      end <- int(record(8), "end offset", number)
+      line <- int(record(9), "line", number)
+      branch <- bool(record(12), "is branch", number)
     yield CoverageStatement(
       id,
       SourcePathNormalizer.normalize(record(1), baseDir),
@@ -80,9 +79,9 @@ object CoverageReportParser:
       branch
     )
 
-  private def int(value: String, field: String): Either[String, Int] =
-    value.toIntOption.toRight(s"$field is not a number: '$value'")
+  private def int(value: String, field: String, number: Int): Either[Error, Int] =
+    value.toIntOption.toRight(Error.BadField(number, field, "a number", value))
 
-  private def bool(value: String, field: String): Either[String, Boolean] =
-    value.toBooleanOption.toRight(s"$field is not true or false: '$value'")
+  private def bool(value: String, field: String, number: Int): Either[Error, Boolean] =
+    value.toBooleanOption.toRight(Error.BadField(number, field, "true or false", value))
 end CoverageReportParser
