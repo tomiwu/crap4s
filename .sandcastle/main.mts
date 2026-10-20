@@ -125,6 +125,11 @@ async function runChecks(sandbox: sandcastle.Sandbox): Promise<{ ok: boolean; lo
   const testOk = test.exitCode === 0;
   let log = `## scala-cli test .\n${test.stdout}\n`;
   let ok = testOk;
+  if ((await sandbox.exec("test -f .scalafmt.conf")).exitCode === 0) {
+    const fmt = await sandbox.exec("scala-cli fmt --check . > /tmp/fmt.log 2>&1; rc=$?; grep -v 'Looking for' /tmp/fmt.log | tail -n 60; exit $rc");
+    log += `## scala-cli fmt --check . (run \`scala-cli fmt .\` to fix)\n${fmt.stdout}\n`;
+    ok = ok && fmt.exitCode === 0;
+  }
   const hasSelf = (await sandbox.exec("test -x scripts/self-crap.sh")).exitCode === 0;
   if (hasSelf) {
     const self = await sandbox.exec("scripts/self-crap.sh > /tmp/self.log 2>&1; rc=$?; tail -n 200 /tmp/self.log; exit $rc");

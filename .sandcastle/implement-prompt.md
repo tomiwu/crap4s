@@ -17,7 +17,7 @@ Implement issue #{{ISSUE}} on branch `{{BRANCH}}`. Do only this issue.
 1. Read the issue. Read `docs/PRD.md`. Follow the PRD. Follow `docs/CODING_STANDARDS.md` when it exists.
 2. Read the source files and tests that exist.
 3. Use Red-Green-Refactor. Write a failing test first. Then write the code that makes the test pass.
-4. Run `scala-cli compile .` and `scala-cli test .`. Fix all failures.
+4. If `.scalafmt.conf` exists, run `scala-cli fmt .`. Run `scala-cli compile .` and `scala-cli test .`. Fix all failures.
 5. Make one git commit. Start the message with `RALPH: #{{ISSUE}}`. Write the task, the key decisions and the files changed.
 
 # Rules
