@@ -2,6 +2,7 @@ package crap4s
 
 import java.nio.file.Files
 import java.nio.file.Path
+import scala.util.Try
 
 object CliParser:
 
@@ -9,20 +10,27 @@ object CliParser:
     readFlags(args).flatMap(toConfig)
 
   private case class Flags(
-      tasty: Option[String],
-      coverage: Option[String],
+      tasty: List[String],
+      coverage: List[String],
+      classpath: List[String],
       threshold: Double,
       all: Boolean
   )
 
   private def readFlags(args: List[String]): Either[Error, Flags] =
-    parseLoop(args, Flags(None, None, CliConfig.DefaultThreshold, false))
+    parseLoop(args, Flags(Nil, Nil, Nil, CliConfig.DefaultThreshold, false))
 
   private type Step = Either[Error, (List[String], Flags)]
 
   private val valueOptions: Map[String, (Flags, String) => Either[Error, Flags]] = Map(
-    "--tasty" -> ((flags, value) => Right(flags.copy(tasty = Some(value)))),
-    "--coverage" -> ((flags, value) => Right(flags.copy(coverage = Some(value)))),
+    "--tasty" -> ((flags, value) => Right(flags.copy(tasty = flags.tasty :+ value))),
+    "--coverage" -> ((flags, value) => Right(flags.copy(coverage = flags.coverage :+ value))),
+    "--classpath" ->
+      ((flags, value) => Right(flags.copy(classpath = flags.classpath ++ splitEntries(value)))),
+    "--classpath-file" ->
+      ((flags, value) =>
+        readClasspathFile(value).map(entries => flags.copy(classpath = flags.classpath ++ entries))
+      ),
     "--threshold" ->
       ((flags, value) =>
         parseThreshold(value).map(threshold => flags.copy(threshold = threshold))
@@ -47,13 +55,26 @@ object CliParser:
   private def parseThreshold(value: String): Either[Error, Double] =
     value.toDoubleOption.toRight(Error.InvalidThreshold(value))
 
+  /** Entries are separated by `:` or by line breaks. Empty entries are ignored. */
+  def splitEntries(text: String): List[String] =
+    text.split("[:\\r\\n]").toList.map(_.trim).filter(_.nonEmpty)
+
+  private def readClasspathFile(file: String): Either[Error, List[String]] =
+    Try(Files.readString(Path.of(file))).toEither.left
+      .map(e => Error.CannotRead(file, e.getMessage))
+      .map(splitEntries)
+
+  private def required(option: String, values: List[String]): Either[Error, List[String]] =
+    if values.isEmpty then Left(Error.MissingOption(option)) else Right(values)
+
   private def toConfig(flags: Flags): Either[Error, CliConfig] =
     for
-      tasty <- flags.tasty.toRight(Error.MissingOption("--tasty"))
-      coverage <- flags.coverage.toRight(Error.MissingOption("--coverage"))
-      _ <- requireDirectory(tasty)
-      _ <- requireDirectory(coverage)
-    yield CliConfig(tasty, coverage, flags.threshold, flags.all)
+      tasty <- required("--tasty", flags.tasty)
+      coverage <- required("--coverage", flags.coverage)
+      _ <- (tasty ++ coverage).foldLeft(Right(()): Either[Error, Unit])((acc, dir) =>
+        acc.flatMap(_ => requireDirectory(dir))
+      )
+    yield CliConfig(tasty, coverage, flags.classpath, flags.threshold, flags.all)
 
   private def requireDirectory(path: String): Either[Error, Unit] =
     if Files.isDirectory(Path.of(path)) then Right(())

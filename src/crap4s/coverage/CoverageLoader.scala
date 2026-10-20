@@ -11,6 +11,15 @@ object CoverageLoader:
   private val ReportName = "scoverage.coverage"
   private val MeasurementsPrefix = "scoverage.measurements."
 
+  def loadAll(dirs: List[Path], baseDir: Option[Path] = None): Either[Error, CoverageData] =
+    dirs
+      .foldLeft(Right(Nil): Either[Error, List[CoverageData]]): (acc, dir) =>
+        for
+          parts <- acc
+          part <- load(dir, baseDir)
+        yield parts :+ part
+      .map(CoverageData.merge)
+
   def load(dir: Path, baseDir: Option[Path] = None): Either[Error, CoverageData] =
     for
       statements <- loadReport(dir.resolve(ReportName), baseDir)

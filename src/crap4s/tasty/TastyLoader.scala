@@ -11,11 +11,16 @@ import java.nio.file.Path
 object TastyLoader:
 
   def load(tastyDir: Path): Either[Error, TastyLoadResult] =
-    val labels = TastyClasspath.entryLabels(tastyDir)
-    val classpath = ClasspathLoaders.read(TastyClasspath.paths(tastyDir))
+    load(List(tastyDir), Nil)
+
+  def load(tastyDirs: List[Path], extra: List[Path]): Either[Error, TastyLoadResult] =
+    val labels = TastyClasspath.entryLabels(tastyDirs)
+    val classpath = ClasspathLoaders.read(TastyClasspath.paths(tastyDirs, extra))
     val ctx = tastyquery.Contexts.Context.initialize(classpath)
     given Context = ctx
-    val symbols = ctx.findSymbolsByClasspathEntry(classpath.head).toList
+    val symbols = classpath.take(
+      tastyDirs.map(TastyClasspath.normalizedTastyDir).distinct.size
+    ).flatMap(ctx.findSymbolsByClasspathEntry)
     val topLevels = symbols.flatMap(TopLevelDeclBuilder.fromSymbol)
     val methods = symbols.flatMap(methodsFromTopLevel)
     Right(TastyLoadResult(labels, topLevels, methods, ctx))
@@ -26,3 +31,4 @@ object TastyLoader:
         val owner = TopLevelDeclBuilder.topLevelName(cls)
         cls.declarations.flatMap(LoadedMethodBuilder.fromOwner(owner, _))
       case _ => Nil
+end TastyLoader

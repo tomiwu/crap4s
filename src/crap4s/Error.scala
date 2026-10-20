@@ -5,6 +5,11 @@ enum Error(val message: String):
   case InvalidThreshold(value: String) extends Error(s"Invalid threshold: $value")
   case MissingOption(option: String) extends Error(s"Missing required option: $option")
   case MissingDirectory(path: String) extends Error(s"Directory does not exist: $path")
+  case UnresolvedSymbol(detail: String)
+      extends Error(
+        s"A symbol does not resolve: $detail. Add the dependencies of the project with " +
+          "--classpath or --classpath-file. See docs/classpath.md."
+      )
   case CannotRead(path: String, reason: String) extends Error(s"Cannot read $path: $reason")
   case CannotList(path: String, reason: String) extends Error(s"Cannot list $path: $reason")
   case BadReportVersion(expected: String)
