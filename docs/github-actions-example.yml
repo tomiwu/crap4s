@@ -1,0 +1,35 @@
+# Copy this file to .github/workflows/crap.yml in your repository.
+# Change the build steps for your build tool. The example uses Scala CLI.
+name: CRAP
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  crap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: VirtusLab/scala-cli-setup@v1
+      - name: Compile with coverage and get the classpath
+        run: |
+          mkdir -p out
+          opts=(-O "-coverage-out:out/coverage" -O "-sourceroot:$PWD")
+          scala-cli compile . "${opts[@]}" -d out/classes
+          scala-cli compile . "${opts[@]}" --print-class-path > out/classpath.txt
+      - name: Run the tests
+        run: scala-cli test . -O "-coverage-out:out/coverage" -O "-sourceroot:$PWD"
+      - name: Install crap4s from the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          gh release download --repo tomiwu/crap4s --pattern crap4s --dir "$HOME/.local/bin"
+          chmod +x "$HOME/.local/bin/crap4s"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Fail if a unit has a CRAP score above 6
+        run: crap4s --tasty out/classes --coverage out/coverage --classpath-file out/classpath.txt --threshold 6

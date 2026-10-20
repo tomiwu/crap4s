@@ -2,7 +2,9 @@ package crap4s.tasty
 
 import java.net.URI
 import java.nio.file.FileSystems
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 
 object TastyClasspath:
 
@@ -18,7 +20,18 @@ object TastyClasspath:
     tastyDirs.map(normalizedTastyDir(_).toString) :+ JreLabel
 
   def scalaLibraryPath: Path =
-    Path.of(classOf[scala.Predef.type].getProtectionDomain.getCodeSource.getLocation.toURI)
+    asJar(Path.of(classOf[scala.Predef.type].getProtectionDomain.getCodeSource.getLocation.toURI))
+
+  /**
+   * tasty-query accepts only directories and files that end with `.jar`. The release file is named
+   * `crap4s`, so this method copies a file without the suffix to a temporary `.jar` file.
+   */
+  def asJar(path: Path): Path =
+    if Files.isDirectory(path) || path.toString.endsWith(".jar") then path
+    else
+      val copy = Files.createTempFile("crap4s-", ".jar")
+      copy.toFile.deleteOnExit()
+      Files.copy(path, copy, StandardCopyOption.REPLACE_EXISTING)
 
   /**
    * Jars on the JVM class path of crap4s. They give the types of the Scala library and of crap4s
