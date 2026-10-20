@@ -4,7 +4,6 @@ import crap4s.tasty.TastyClasspath
 import munit.FunSuite
 
 import java.nio.file.Files
-import java.nio.file.Path
 
 class TastyClasspathTest extends FunSuite:
 
