@@ -38,11 +38,7 @@ jobs:
           java-version: "25"
       - uses: VirtusLab/scala-cli-setup@v1
       - name: Run the tests
-        run: |
-          scala-cli test .
-      - name: Run the CRAP self-check (every unit must have CRAP < 4)
-        run: |
-          scripts/self-crap.sh
+        run: scala-cli test .
   crap:
     runs-on: ubuntu-latest
     steps:
