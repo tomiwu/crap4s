@@ -18,7 +18,7 @@ class EndToEndTest extends FunSuite:
       Process(Seq("scala-cli", "compile", project.toString, "--print-class-path") ++ opts).!!
     val classes = Files.createTempDirectory("crap4s-e2e-classes")
     val mainClasses = Path.of(classPath.trim.takeWhile(_ != ':'))
-    Process(Seq("cp", "-r", s"$mainClasses/.", classes.toString)).!!
+    assertEquals(Process(Seq("cp", "-r", s"$mainClasses/.", classes.toString)).!, 0)
     assertEquals(Process(Seq("scala-cli", "test", project.toString) ++ opts).!, 0)
     (classes, coverage)
 

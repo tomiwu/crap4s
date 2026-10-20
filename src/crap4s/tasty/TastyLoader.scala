@@ -1,11 +1,11 @@
 package crap4s.tasty
 
-import java.nio.file.Path
-
 import tastyquery.Contexts.Context
 import tastyquery.Symbols.ClassSymbol
 import tastyquery.Symbols.TermOrTypeSymbol
 import tastyquery.jdk.ClasspathLoaders
+
+import java.nio.file.Path
 
 object TastyLoader:
 
