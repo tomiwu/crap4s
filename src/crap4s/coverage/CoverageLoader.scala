@@ -18,7 +18,10 @@ object CoverageLoader:
   private def read(file: Path): Either[String, String] =
     Try(Files.readString(file)).toEither.left.map(e => s"Cannot read $file: ${e.getMessage}")
 
-  private def loadReport(file: Path, baseDir: Option[Path]): Either[String, List[CoverageStatement]] =
+  private def loadReport(
+      file: Path,
+      baseDir: Option[Path]
+  ): Either[String, List[CoverageStatement]] =
     read(file).flatMap(CoverageReportParser.parse(_, baseDir))
 
   private def measurementFiles(dir: Path): Either[String, List[Path]] =
@@ -34,3 +37,4 @@ object CoverageLoader:
           text <- read(file)
           more <- MeasurementsParser.parse(file.getFileName.toString, text)
         yield ids ++ more
+end CoverageLoader

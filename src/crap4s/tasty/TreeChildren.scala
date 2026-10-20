@@ -7,10 +7,10 @@ object TreeChildren:
   def of(node: Any): List[Any] =
     node match
       case tree: Tree => tree.productIterator.toList
-      case other      => ofContainer(other)
+      case other => ofContainer(other)
 
   private def ofContainer(node: Any): List[Any] =
     node match
-      case either: Either[?, ?]   => List(either.fold(identity, identity))
+      case either: Either[?, ?] => List(either.fold(identity, identity))
       case items: IterableOnce[?] => items.iterator.toList
-      case _                      => Nil
+      case _ => Nil

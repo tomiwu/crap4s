@@ -14,8 +14,9 @@ class CliTest extends FunSuite:
     val fixture = Path.of("test/fixtures/cc-sample").toAbsolutePath.normalize
     val classes = Files.createTempDirectory("crap4s-cli-classes")
     val coverage = Files.createTempDirectory("crap4s-cli-coverage")
-    val cmd = Seq("scala-cli", "compile", fixture.toString, "-d", classes.toString, "-S", "3.10.0") ++
-      Seq("-O", s"-coverage-out:$coverage", "-O", s"-sourceroot:$fixture")
+    val cmd =
+      Seq("scala-cli", "compile", fixture.toString, "-d", classes.toString, "-S", "3.10.0") ++
+        Seq("-O", s"-coverage-out:$coverage", "-O", s"-sourceroot:$fixture")
     assertEquals(Process(cmd).!, 0)
     (classes, coverage)
 
@@ -45,3 +46,4 @@ class CliTest extends FunSuite:
     assertEquals(outcome.code, Cli.ErrorCode)
     assert(outcome.err.contains("Unknown option: --bogus"))
     assertEquals(outcome.out, "")
+end CliTest

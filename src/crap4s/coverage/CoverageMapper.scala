@@ -14,9 +14,14 @@ object CoverageMapper:
   val NoStatementsCoverage: Double = 0.0
 
   /** Assigns each statement to the narrowest unit whose range `[start, end)` contains it. */
-  def map(units: List[LoadedMethod], data: CoverageData, baseDir: Option[Path]): List[UnitCoverage] =
+  def map(
+      units: List[LoadedMethod],
+      data: CoverageData,
+      baseDir: Option[Path]
+  ): List[UnitCoverage] =
     val indexed = units.zipWithIndex.map((unit, i) => (i, key(unit, baseDir), unit))
-    val owned = data.statements.flatMap(s => owner(indexed, s, baseDir).map(_ -> s)).groupMap(_._1)(_._2)
+    val owned =
+      data.statements.flatMap(s => owner(indexed, s, baseDir).map(_ -> s)).groupMap(_._1)(_._2)
     indexed.map: (i, _, unit) =>
       val own = owned.getOrElse(i, Nil)
       UnitCoverage(unit, own.size, own.count(s => data.executedIds.contains(s.id)))
@@ -40,3 +45,4 @@ object CoverageMapper:
       .filter((_, file, unit) => file == path && contains(unit, s))
       .minByOption((_, _, unit) => length(unit))
       .map(_._1)
+end CoverageMapper

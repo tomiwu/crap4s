@@ -23,9 +23,10 @@ object CliParser:
   private val valueOptions: Map[String, (Flags, String) => Either[String, Flags]] = Map(
     "--tasty" -> ((flags, value) => Right(flags.copy(tasty = Some(value)))),
     "--coverage" -> ((flags, value) => Right(flags.copy(coverage = Some(value)))),
-    "--threshold" -> ((flags, value) =>
-      parseThreshold(value).map(threshold => flags.copy(threshold = threshold))
-    )
+    "--threshold" ->
+      ((flags, value) =>
+        parseThreshold(value).map(threshold => flags.copy(threshold = threshold))
+      )
   )
 
   private def parseLoop(rest: List[String], flags: Flags): Either[String, Flags] =
@@ -57,3 +58,4 @@ object CliParser:
   private def requireDirectory(path: String): Either[String, Unit] =
     if Files.isDirectory(Path.of(path)) then Right(())
     else Left(s"Directory does not exist: $path")
+end CliParser

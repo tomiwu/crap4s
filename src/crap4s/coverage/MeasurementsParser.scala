@@ -9,5 +9,7 @@ object MeasurementsParser:
       case (acc, (line, index)) =>
         for
           ids <- acc
-          id <- line.toIntOption.toRight(s"Damaged $name: line ${index + 1} is not a statement id: '$line'")
+          id <- line.toIntOption.toRight(
+            s"Damaged $name: line ${index + 1} is not a statement id: '$line'"
+          )
         yield ids + id

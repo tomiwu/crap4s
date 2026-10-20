@@ -7,11 +7,17 @@ object CsvWriter:
 
   private val Special: Set[Char] = Set(',', '"', '\n', '\r')
 
-  def render(rows: List[UnitRow]): String =
-    (Header :: rows.map(line)).mkString("", "\n", "\n")
+  def render(rows: List[UnitRow]): String = (Header :: rows.map(line)).mkString("", "\n", "\n")
 
   def line(row: UnitRow): String =
-    List(escape(row.file), row.line.toString, escape(row.unit), row.cc.toString, number(row.cov), number(row.crap))
+    List(
+      escape(row.file),
+      row.line.toString,
+      escape(row.unit),
+      row.cc.toString,
+      number(row.cov),
+      number(row.crap)
+    )
       .mkString(",")
 
   def escape(field: String): String =
@@ -21,3 +27,4 @@ object CsvWriter:
 
   private def number(value: Double): String =
     String.format(Locale.ROOT, "%.2f", Double.box(value))
+end CsvWriter

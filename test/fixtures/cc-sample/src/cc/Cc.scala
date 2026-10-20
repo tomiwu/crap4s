@@ -18,7 +18,7 @@ object Cc:
   def matchGuard(a: Int): Int =
     a match
       case x if x > 5 => 1
-      case _          => 2
+      case _ => 2
 
   def catchCases(f: () => Int): Int =
     try f()
@@ -82,3 +82,4 @@ object Cc:
 
   final case class Flag(on: Boolean):
     def &&(other: Flag): Flag = Flag(on && other.on)
+end Cc

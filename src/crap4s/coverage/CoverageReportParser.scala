@@ -2,12 +2,12 @@ package crap4s.coverage
 
 import java.nio.file.Path
 
-/** Parser for `scoverage.coverage`, format version 3.0.
-  *
-  * The format comes from the Scala 3 compiler, file
-  * `compiler/src/dotty/tools/dotc/coverage/Serializer.scala`. See
-  * `docs/coverage-format.md`.
-  */
+/**
+ * Parser for `scoverage.coverage`, format version 3.0.
+ *
+ * The format comes from the Scala 3 compiler, file
+ * `compiler/src/dotty/tools/dotc/coverage/Serializer.scala`. See `docs/coverage-format.md`.
+ */
 object CoverageReportParser:
   private val RecordSeparator = "\f"
   private val FieldCount = 15
@@ -20,7 +20,11 @@ object CoverageReportParser:
 
   private def checkVersion(lines: List[String]): Either[String, Unit] =
     val expected = VersionPrefix + SupportedVersion
-    Either.cond(lines.headOption.contains(expected), (), s"Damaged scoverage.coverage: expected '$expected' on line 1")
+    Either.cond(
+      lines.headOption.contains(expected),
+      (),
+      s"Damaged scoverage.coverage: expected '$expected' on line 1"
+    )
 
   private def parseRecords(
       lines: List[String],
@@ -48,21 +52,37 @@ object CoverageReportParser:
       baseDir: Option[Path]
   ): Either[String, CoverageStatement] =
     if record.size < FieldCount then
-      Left(s"Damaged scoverage.coverage: record $number has ${record.size} lines, expected at least $FieldCount")
+      Left(
+        s"Damaged scoverage.coverage: record $number has ${record.size} lines, expected at least $FieldCount"
+      )
     else
-      toStatement(record, baseDir).left.map(reason => s"Damaged scoverage.coverage: record $number: $reason")
+      toStatement(record, baseDir).left.map(reason =>
+        s"Damaged scoverage.coverage: record $number: $reason"
+      )
 
-  private def toStatement(record: List[String], baseDir: Option[Path]): Either[String, CoverageStatement] =
+  private def toStatement(
+      record: List[String],
+      baseDir: Option[Path]
+  ): Either[String, CoverageStatement] =
     for
       id <- int(record(0), "id")
       start <- int(record(7), "start offset")
       end <- int(record(8), "end offset")
       line <- int(record(9), "line")
       branch <- bool(record(12), "is branch")
-    yield CoverageStatement(id, SourcePathNormalizer.normalize(record(1), baseDir), start, end, line, record(6), branch)
+    yield CoverageStatement(
+      id,
+      SourcePathNormalizer.normalize(record(1), baseDir),
+      start,
+      end,
+      line,
+      record(6),
+      branch
+    )
 
   private def int(value: String, field: String): Either[String, Int] =
     value.toIntOption.toRight(s"$field is not a number: '$value'")
 
   private def bool(value: String, field: String): Either[String, Boolean] =
     value.toBooleanOption.toRight(s"$field is not true or false: '$value'")
+end CoverageReportParser

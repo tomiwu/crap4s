@@ -53,3 +53,4 @@ class CliParserTest extends FunSuite:
     val tasty = Files.createTempDirectory("bad-coverage-tasty").toString
     val result = CliParser.parse(List("--tasty", tasty, "--coverage", "/no/such/coverage"))
     assert(result.isLeft)
+end CliParserTest

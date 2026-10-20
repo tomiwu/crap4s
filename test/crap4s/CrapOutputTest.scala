@@ -34,10 +34,14 @@ class CrapOutputTest extends FunSuite:
     assert(!UnitRow.exceeds(List(row("a", 1, 1.0)), 6.0))
 
   test("header and plain row"):
-    assertEquals(CsvWriter.render(List(row("a", 2, 0.5))), "file,line,unit,cc,cov,crap\nA.scala,1,a,2,0.50,2.50\n")
+    assertEquals(
+      CsvWriter.render(List(row("a", 2, 0.5))),
+      "file,line,unit,cc,cov,crap\nA.scala,1,a,2,0.50,2.50\n"
+    )
 
   test("fields with commas and quotes are escaped"):
     assertEquals(CsvWriter.escape("a,b"), "\"a,b\"")
     assertEquals(CsvWriter.escape("say \"hi\""), "\"say \"\"hi\"\"\"")
     assertEquals(CsvWriter.escape("plain"), "plain")
     assertEquals(CsvWriter.escape("a\nb"), "\"a\nb\"")
+end CrapOutputTest

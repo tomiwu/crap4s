@@ -9,7 +9,7 @@ object TopLevelDeclBuilder:
   def fromSymbol(sym: TermOrTypeSymbol)(using Context): Option[TopLevelDecl] =
     sym match
       case cls: ClassSymbol if cls.owner.isPackage => Some(fromClass(cls))
-      case _                                       => None
+      case _ => None
 
   def topLevelName(cls: ClassSymbol): String =
     val full = cls.displayFullName

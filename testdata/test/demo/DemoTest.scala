@@ -27,3 +27,4 @@ class DemoTest extends FunSuite:
   test("point and inline"):
     assertEquals(Point(1, -2).norm1, 3)
     assertEquals(twice(2), 4)
+end DemoTest

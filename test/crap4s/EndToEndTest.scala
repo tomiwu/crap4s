@@ -14,7 +14,8 @@ class EndToEndTest extends FunSuite:
   private lazy val dirs: (Path, Path) =
     val coverage = Files.createTempDirectory("crap4s-e2e-coverage")
     val opts = Seq("-O", s"-coverage-out:$coverage", "-O", s"-sourceroot:$project")
-    val classPath = Process(Seq("scala-cli", "compile", project.toString, "--print-class-path") ++ opts).!!
+    val classPath =
+      Process(Seq("scala-cli", "compile", project.toString, "--print-class-path") ++ opts).!!
     val classes = Files.createTempDirectory("crap4s-e2e-classes")
     val mainClasses = Path.of(classPath.trim.takeWhile(_ != ':'))
     Process(Seq("cp", "-r", s"$mainClasses/.", classes.toString)).!!
@@ -36,3 +37,4 @@ class EndToEndTest extends FunSuite:
 
   test("a high threshold gives code 0"):
     assertEquals(run("--threshold", "100000").code, 0)
+end EndToEndTest
