@@ -107,6 +107,19 @@ function nextIssue(merged: Set<number>): Issue | undefined {
   return ready.find((i) => sh("gh", ["issue", "view", String(i.number), "--json", "state", "--jq", ".state"]) === "OPEN");
 }
 
+// Collect the last lines of the log of each failed CI job of a PR.
+function failedCiLog(url: string): string {
+  const jobs = spawnSync("gh", ["pr", "checks", url, "--json", "name,state,link", "--jq",
+    '.[] | select(.state == "FAILURE") | "\\(.name) \\(.link)"'], { encoding: "utf8" }).stdout.trim().split("\n").filter(Boolean);
+  return jobs.map((line) => {
+    const [name, link] = line.split(" ");
+    const jobId = link?.match(/job\/(\d+)/)?.[1];
+    const raw = jobId ? spawnSync("gh", ["api", "--allow-escape-sequences", `repos/{owner}/{repo}/actions/jobs/${jobId}/logs`], { encoding: "utf8" }).stdout : "";
+    const clean = raw.replace(/\x1b\[[0-9;]*m/g, "").split("\n").filter((l) => !/Download|Checking https|Checked https/.test(l));
+    return `## CI job ${name}\n${clean.slice(-150).join("\n")}`;
+  }).join("\n");
+}
+
 async function runChecks(sandbox: sandcastle.Sandbox): Promise<{ ok: boolean; log: string }> {
   const test = await sandbox.exec("scala-cli test . > /tmp/test.log 2>&1; rc=$?; tail -n 200 /tmp/test.log; exit $rc");
   const testOk = test.exitCode === 0;
@@ -137,10 +150,18 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   if (!issue) { console.log("No ready issue. Stopping."); break; }
   console.log(`\n=== Iteration ${iteration}/${MAX_ITERATIONS}: issue #${issue.number} ${issue.title} ===\n`);
 
-  const branch = `sandcastle/issue-${issue.number}-${Date.now()}`;
-  const sandbox = await sandcastle.createSandbox({ branch, sandbox: podman(), hooks });
+  // Resume an open PR for this issue (for example after CI failed in an earlier run).
+  const existing = JSON.parse(sh("gh", ["pr", "list", "--state", "open", "--json", "url,headRefName"]))
+    .find((p: { headRefName: string }) => p.headRefName.startsWith(`sandcastle/issue-${issue.number}-`));
+  const branch: string = existing?.headRefName ?? `sandcastle/issue-${issue.number}-${Date.now()}`;
   const args = { ISSUE: String(issue.number), BRANCH: branch };
-  let passed = false;
+  let passed = Boolean(existing);
+  if (existing) {
+    console.log(`Resume the open PR ${existing.url}.`);
+    spawnSync("git", ["fetch", "origin", branch]);
+    spawnSync("git", ["branch", "-f", branch, `origin/${branch}`]);
+  } else {
+  const sandbox = await sandcastle.createSandbox({ branch, sandbox: podman(), hooks });
   try {
     const implement = await runPhase(sandbox, {
       name: "implementer", maxIterations: 1,
@@ -167,6 +188,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   } finally {
     await sandbox.close();
   }
+  }
 
   if (!passed) {
     console.log(`Issue #${issue.number} cannot pass the checks. Stopping the loop.`);
@@ -177,8 +199,8 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     break;
   }
 
-  sh("git", ["push", "-f", "origin", branch]);
-  const url = sh("gh", ["pr", "create", "--base", "main", "--head", branch,
+  if (!existing) sh("git", ["push", "-f", "origin", branch]);
+  const url: string = existing ? existing.url : sh("gh", ["pr", "create", "--base", "main", "--head", branch,
     "--title", issue.title,
     "--body", `This PR implements #${issue.number}.\n\nThe checks pass: \`scala-cli test .\` and the CRAP self-check (if available).\n\nCloses #${issue.number}`]);
   console.log(`PR: ${url}`);
@@ -196,12 +218,30 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   }
   // main requires the check "test" on an up-to-date branch. Update the branch and retry.
   let mergedOk = false;
-  for (let attempt = 0; attempt < 3 && !mergedOk; attempt++) {
+  for (let attempt = 0; attempt <= MAX_FIX_ATTEMPTS && !mergedOk; attempt++) {
     spawnSync("gh", ["pr", "update-branch", url], { stdio: "inherit" });
     await new Promise((r) => setTimeout(r, 20_000));
-    const watch = spawnSync("gh", ["pr", "checks", url, "--watch", "--fail-fast"], { stdio: "inherit", timeout: 30 * 60_000 });
-    if (watch.status !== 0) break;
-    mergedOk = spawnSync("gh", ["pr", "merge", url, "--squash", "--delete-branch"], { stdio: "inherit" }).status === 0;
+    const watch = spawnSync("gh", ["pr", "checks", url, "--watch"], { stdio: "inherit", timeout: 30 * 60_000 });
+    if (watch.status === 0) {
+      mergedOk = spawnSync("gh", ["pr", "merge", url, "--squash", "--delete-branch"], { stdio: "inherit" }).status === 0;
+      continue;
+    }
+    if (attempt === MAX_FIX_ATTEMPTS) break;
+    // CI failed. Give the CI log to the fixer agent, push the fix, and wait for CI again.
+    console.log(`CI failed for ${url}. Run the fixer (attempt ${attempt + 1}).`);
+    spawnSync("git", ["fetch", "origin", branch]);
+    spawnSync("git", ["branch", "-f", branch, `origin/${branch}`]);
+    const fixBox = await sandcastle.createSandbox({ branch, sandbox: podman(), hooks });
+    try {
+      await runPhase(fixBox, {
+        name: `ci-fixer-${attempt + 1}`, maxIterations: 1,
+        promptFile: "./.sandcastle/fix-prompt.md",
+        promptArgs: { ...args, CHECK_LOG: failedCiLog(url).slice(-12000) },
+      });
+    } finally {
+      await fixBox.close();
+    }
+    sh("git", ["push", "-f", "origin", branch]);
   }
   if (!mergedOk) {
     console.log(`CI failed or the merge failed for ${url}. Do not merge. Stopping the loop.`);

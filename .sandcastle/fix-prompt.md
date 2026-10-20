@@ -1,6 +1,6 @@
 # Task
 
-You work on crap4s, issue #{{ISSUE}}, branch `{{BRANCH}}`. The checks failed. Fix the code so that all checks pass.
+You work on crap4s, issue #{{ISSUE}}, branch `{{BRANCH}}`. The checks failed (local checks or GitHub Actions CI). Fix the code so that all checks pass. The CI workflow is `.github/workflows/ci.yml`. Keep the job id `test`. Do not skip a CI step when a file is missing.
 
 ## Check output
 
