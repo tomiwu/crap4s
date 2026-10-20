@@ -25,7 +25,9 @@ Implement issue #{{ISSUE}} on branch `{{BRANCH}}`. Do only this issue.
 - Write all code, comments and commit messages in English. Use ASD-STE100 Simplified Technical English: short sentences, active voice, one instruction in each sentence.
 - Keep all versions in `project.scala` as `//> using` directives. Use these versions: Scala `3.10.0`, `ch.epfl.scala::tasty-query:1.10.0`, `org.scalameta::munit:1.3.6`, JVM `25`. If you add a library, use its latest stable version.
 - Do not push. Do not open a PR. Do not close the issue. The host does these steps after the checks pass.
-- Do not edit `docs/PRD.md`, `.sandcastle/` or `.github/`.
+- Do not edit `docs/PRD.md` or `.sandcastle/`.
+- You can edit `.github/workflows/ci.yml`. Keep the job id `test`. Branch protection requires the check `test`. The `test` job must run the tests and `scripts/self-crap.sh`. You can add new jobs.
+- In `ci.yml`, do not skip a step when a file is missing. The tests always run. `scripts/self-crap.sh` always runs, and the job fails if the script is missing.
 - Do not leave commented-out code or TODO comments.
 - crap4s checks its own code. Every unit (method or top-level lambda) must have a CRAP score less than 4. Keep methods small and tested.
 - The self-check script name is `scripts/self-crap.sh`. If an issue uses another name (for example `self-check.sh`), use `scripts/self-crap.sh`.

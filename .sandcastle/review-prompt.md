@@ -48,7 +48,9 @@ Review the code changes on branch `{{BRANCH}}` and improve code clarity, consist
 
 - Every unit must have a CRAP score less than 4. Make methods small and well tested.
 - Do not push. Do not open a PR. Do not close the issue.
-- Do not edit `docs/PRD.md`, `.sandcastle/` or `.github/`.
+- Do not edit `docs/PRD.md` or `.sandcastle/`.
+- You can edit `.github/workflows/ci.yml`. Keep the job id `test`. Branch protection requires the check `test`. The `test` job must run the tests and `scripts/self-crap.sh`. You can add new jobs.
+- In `ci.yml`, do not skip a step when a file is missing. The tests always run. `scripts/self-crap.sh` always runs, and the job fails if the script is missing.
 
 # EXECUTION
 
