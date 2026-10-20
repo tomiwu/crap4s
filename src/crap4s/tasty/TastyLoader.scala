@@ -1,5 +1,6 @@
 package crap4s.tasty
 
+import crap4s.Error
 import tastyquery.Contexts.Context
 import tastyquery.Symbols.ClassSymbol
 import tastyquery.Symbols.TermOrTypeSymbol
@@ -9,7 +10,7 @@ import java.nio.file.Path
 
 object TastyLoader:
 
-  def load(tastyDir: Path): Either[String, TastyLoadResult] =
+  def load(tastyDir: Path): Either[Error, TastyLoadResult] =
     val labels = TastyClasspath.entryLabels(tastyDir)
     val classpath = ClasspathLoaders.read(TastyClasspath.paths(tastyDir))
     val ctx = tastyquery.Contexts.Context.initialize(classpath)

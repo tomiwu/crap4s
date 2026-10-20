@@ -1,5 +1,7 @@
 package crap4s.coverage
 
+import crap4s.Error
+
 import java.nio.file.Files
 import java.nio.file.Path
 import scala.jdk.CollectionConverters.*
@@ -9,29 +11,31 @@ object CoverageLoader:
   private val ReportName = "scoverage.coverage"
   private val MeasurementsPrefix = "scoverage.measurements."
 
-  def load(dir: Path, baseDir: Option[Path] = None): Either[String, CoverageData] =
+  def load(dir: Path, baseDir: Option[Path] = None): Either[Error, CoverageData] =
     for
       statements <- loadReport(dir.resolve(ReportName), baseDir)
       ids <- loadMeasurements(dir)
     yield CoverageData(statements, ids)
 
-  private def read(file: Path): Either[String, String] =
-    Try(Files.readString(file)).toEither.left.map(e => s"Cannot read $file: ${e.getMessage}")
+  private def read(file: Path): Either[Error, String] =
+    Try(Files.readString(file)).toEither.left.map(e =>
+      Error.CannotRead(file.toString, e.getMessage)
+    )
 
   private def loadReport(
       file: Path,
       baseDir: Option[Path]
-  ): Either[String, List[CoverageStatement]] =
+  ): Either[Error, List[CoverageStatement]] =
     read(file).flatMap(CoverageReportParser.parse(_, baseDir))
 
-  private def measurementFiles(dir: Path): Either[String, List[Path]] =
+  private def measurementFiles(dir: Path): Either[Error, List[Path]] =
     Try(Files.list(dir).iterator.asScala.toList).toEither.left
-      .map(e => s"Cannot list $dir: ${e.getMessage}")
+      .map(e => Error.CannotList(dir.toString, e.getMessage))
       .map(_.filter(_.getFileName.toString.startsWith(MeasurementsPrefix)).sorted)
 
-  private def loadMeasurements(dir: Path): Either[String, Set[Int]] =
+  private def loadMeasurements(dir: Path): Either[Error, Set[Int]] =
     measurementFiles(dir).flatMap:
-      _.foldLeft(Right(Set.empty): Either[String, Set[Int]]): (acc, file) =>
+      _.foldLeft(Right(Set.empty): Either[Error, Set[Int]]): (acc, file) =>
         for
           ids <- acc
           text <- read(file)

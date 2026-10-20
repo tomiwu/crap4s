@@ -15,9 +15,9 @@ object Cli:
     CliParser
       .parse(args)
       .flatMap(analyze(_, baseDir))
-      .fold(message => Outcome("", message + "\n", ErrorCode), identity)
+      .fold(error => Outcome("", error.message + "\n", ErrorCode), identity)
 
-  private def analyze(config: CliConfig, baseDir: Path): Either[String, Outcome] =
+  private def analyze(config: CliConfig, baseDir: Path): Either[Error, Outcome] =
     for
       tasty <- TastyLoader.load(Path.of(config.tastyDir))
       data <- CoverageLoader.load(Path.of(config.coverageDir), Some(baseDir))

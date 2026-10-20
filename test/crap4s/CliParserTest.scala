@@ -36,22 +36,27 @@ class CliParserTest extends FunSuite:
   test("fail when --tasty is missing"):
     val coverage = Files.createTempDirectory("missing-tasty-coverage").toString
     val result = CliParser.parse(List("--coverage", coverage))
-    assert(result.isLeft, clue = result)
-    assert(result.swap.toOption.get.contains("--tasty"), clue = result)
+    assertEquals(result, Left(Error.MissingOption("--tasty")))
 
   test("fail when --coverage is missing"):
     val tasty = Files.createTempDirectory("missing-coverage-tasty").toString
     val result = CliParser.parse(List("--tasty", tasty))
-    assert(result.isLeft, clue = result)
-    assert(result.swap.toOption.get.contains("--coverage"), clue = result)
+    assertEquals(result, Left(Error.MissingOption("--coverage")))
 
   test("fail when tasty directory does not exist"):
     val coverage = Files.createTempDirectory("bad-tasty-coverage").toString
     val result = CliParser.parse(List("--tasty", "/no/such/tasty", "--coverage", coverage))
-    assert(result.isLeft)
+    assertEquals(result, Left(Error.MissingDirectory("/no/such/tasty")))
 
   test("fail when coverage directory does not exist"):
     val tasty = Files.createTempDirectory("bad-coverage-tasty").toString
     val result = CliParser.parse(List("--tasty", tasty, "--coverage", "/no/such/coverage"))
-    assert(result.isLeft)
+    assertEquals(result, Left(Error.MissingDirectory("/no/such/coverage")))
+
+  test("an error has a readable message"):
+    assertEquals(Error.UnknownOption("--x").message, "Unknown option: --x")
+    assertEquals(
+      Error.BadField(2, "line", "a number", "q").message,
+      "Damaged scoverage.coverage: record 2: line is not a number: 'q'"
+    )
 end CliParserTest

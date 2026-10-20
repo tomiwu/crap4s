@@ -28,7 +28,7 @@ class TastyLoaderTest extends FunSuite:
 
   private def loadCompiled(outputDir: Path): TastyLoadResult =
     TastyLoader.load(outputDir) match
-      case Left(message) => fail(message)
+      case Left(message) => fail(message.message)
       case Right(result) => result
 
   test("classpath contains tasty output directory and JRE"):
