@@ -71,12 +71,11 @@ object CliParser:
     for
       tasty <- required("--tasty", flags.tasty)
       coverage <- required("--coverage", flags.coverage)
-      _ <- (tasty ++ coverage).foldLeft(Right(()): Either[Error, Unit])((acc, dir) =>
-        acc.flatMap(_ => requireDirectory(dir))
-      )
+      _ <- requireDirectories(tasty ++ coverage)
     yield CliConfig(tasty, coverage, flags.classpath, flags.threshold, flags.all)
 
-  private def requireDirectory(path: String): Either[Error, Unit] =
-    if Files.isDirectory(Path.of(path)) then Right(())
-    else Left(Error.MissingDirectory(path))
+  private def requireDirectories(paths: List[String]): Either[Error, Unit] =
+    paths.find(path => !Files.isDirectory(Path.of(path))) match
+      case Some(path) => Left(Error.MissingDirectory(path))
+      case None => Right(())
 end CliParser
