@@ -211,4 +211,4 @@ If Cursor has no more credits during the loop, the loop changes to Claude Code a
 
 ## End-to-end test of the release artifact
 
-`scripts/e2e-release.sh` builds the artifact. It compiles and tests `samples/with-dependency/` with `-coverage-out`. Then it runs crap4s with `--classpath` and checks the CSV. Pass an artifact path to test a downloaded release. The workflow `E2E release` runs the script on `workflow_dispatch` and on tags. It is not a required check.
+`scripts/e2e-release.sh` builds the artifact. It compiles and tests `samples/with-dependency/` with `-coverage-out`. Then it runs crap4s with `--classpath-file` and checks the CSV. Pass an artifact path to test a downloaded release. The workflow `E2E release` runs the script on `workflow_dispatch` and on tags. It is not a required check.
