@@ -13,9 +13,12 @@ import crap4s.input.fileSystem
 import crap4s.input.scoverage.scoverageAt
 import crap4s.input.tasty.tastyUnitsAt
 import crap4s.pipeline.Coverage
+import crap4s.pipeline.Inputs
+import crap4s.pipeline.Mapped
 import crap4s.pipeline.Mapping
 import crap4s.pipeline.Report
 import crap4s.pipeline.Result
+import crap4s.pipeline.Scored
 import crap4s.pipeline.Scoring
 import crap4s.pipeline.Units
 import crap4s.pipeline.pipeline
@@ -47,10 +50,16 @@ object App:
     val (entries, missing) = config.classpath.partition(files.exists)
     given Units = tastyUnitsAt(config.tastyDirs, entries, baseDir)
     given Coverage = scoverageAt(config.coverageDirs, baseDir)
-    given Mapping = Mapping(mapCoverage)
-    given Scoring = Scoring(rowsFromStats)
-    given Report = reportFor(config.format, color)
-    pipeline(config.threshold, config.all).map(outcome(_, missing))
+    given Mapping = Mapping(mapInputs)
+    given Scoring = Scoring(scoreStats)
+    given Report = reportFor(config.format, config.threshold, config.all, color)
+    pipeline.map(outcome(_, missing))
+
+  private def mapInputs(inputs: Inputs): Either[Error, Mapped] =
+    Right(Mapped(mapCoverage(inputs.units, inputs.statements)))
+
+  private def scoreStats(mapped: Mapped): Either[Error, Scored] =
+    rowsFromStats(mapped.stats).map(Scored(_))
 
   private def outcome(result: Result, missing: List[String]): Outcome =
     Outcome(result.out, missing.map(warning).mkString, result.code)

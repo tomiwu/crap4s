@@ -1,19 +1,20 @@
 package crap4s.cli
 
 import crap4s.core.Threshold
-import crap4s.output.agentReport
 import crap4s.output.renderHuman
+import crap4s.pipeline.Scored
 import munit.FunSuite
 
 class RegistryTest extends FunSuite:
 
   test("the registry knows agent"):
-    assertEquals(reportFor(Format.Agent), agentReport)
+    val report = reportFor(Format.Agent, Threshold.Default, all = false)
+    assertEquals(report(Scored(Nil)).map(_.out), Right("PASS 0 max=0.00\n"))
 
   test("the registry builds the human writer"):
-    val human = reportFor(Format.Human, color = true)
+    val human = reportFor(Format.Human, Threshold.Default, all = false, color = true)
     val expected = renderHuman(true, Nil, Threshold.Default)
-    assertEquals(human.run(Nil, Threshold.Default, all = false), expected)
+    assertEquals(human(Scored(Nil)).map(_.out), expected)
 
   test("the agent format is the default"):
     assertEquals(defaultFormat, Format.Agent)
