@@ -147,7 +147,6 @@ This repository also has a composite action (`action.yml`). It installs crap4s f
 
 We selected a composite action and not a reusable workflow. A reusable workflow (`workflow_call`) runs as a complete job. It cannot know how your build compiles the code, runs the tests and gets the classpath. Each build tool needs other steps. A composite action is one step. You put it after your own build steps, so it works with sbt, Mill and Scala CLI. Pin `version` to a release tag for stable builds.
 
-
 ## More guides
 
 - You can also run the release file with `java -jar crap4s`. Refer to [release.md](release.md) for the release process.
