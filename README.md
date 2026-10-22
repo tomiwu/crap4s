@@ -47,20 +47,18 @@ FAIL 1/100 max=17.80
 
 ```mermaid
 flowchart LR
-  CLI[CLI flags] --> REG[Registry]
-  REG --> US[UnitSource]
-  REG --> CS[CoverageSource]
-  US --> T[TastySource]
-  CS --> S[ScoverageSource]
-  T --> P[Parse to opaque types]
-  S --> P
-  P -- valid --> CORE["Core: Crap.of(cc, cov)"]
-  P -- ValidationError --> ERR[stderr + exit 2]
-  CORE --> RW[ReportWriter]
-  RW --> AG[agent]
-  RW --> HU[human]
-  AG --> OUT[stdout + exit code]
-  HU --> OUT
+  CLI["cli: CliParser, Registry"] --> APP["App.scala: wires the modules"]
+  APP --> PL["pipeline/Pipeline.scala: the flow"]
+  PL --> TASTY["input/tasty: Units"]
+  PL --> SCOV["input/scoverage: Coverage"]
+  TASTY --> CORE["core: CoverageMapper, UnitRow, Crap"]
+  SCOV --> CORE
+  CORE --> OUT["output: Report (agent or human)"]
+  OUT --> STD[stdout + exit code 0 or 1]
+  CLI -- bad flags --> ERR[stderr + exit 2]
+  TASTY -- Error --> ERR
+  SCOV -- Error --> ERR
+  CORE -- Error --> ERR
 ```
 
 ## More information
