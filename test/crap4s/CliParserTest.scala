@@ -117,6 +117,6 @@ class CliParserTest extends FunSuite:
   test("an unknown --format value is an error that lists the known names"):
     val (tasty, coverage) = existingDirs("badformat")
     val result = CliParser.parse(List("--tasty", tasty, "--coverage", coverage, "--format", "xml"))
-    assertEquals(result, Left(Error.UnknownFormat("xml", List("agent"))))
+    assertEquals(result, Left(Error.UnknownFormat("xml", List("agent", "human"))))
     assert(result.left.toOption.get.message.contains("Known formats: agent"))
 end CliParserTest

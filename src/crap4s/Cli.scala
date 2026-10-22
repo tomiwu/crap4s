@@ -12,24 +12,25 @@ object Cli:
   val AboveThresholdCode: Int = 1
   val ErrorCode: Int = 2
 
-  def run(args: List[String], baseDir: Path): Outcome =
-    if args.contains("--help") then Outcome(Usage.text, "", 0) else analyzeArgs(args, baseDir)
+  def run(args: List[String], baseDir: Path, color: Boolean = false): Outcome =
+    if args.contains("--help") then Outcome(Usage.text, "", 0)
+    else analyzeArgs(args, baseDir, color)
 
-  private def analyzeArgs(args: List[String], baseDir: Path): Outcome =
+  private def analyzeArgs(args: List[String], baseDir: Path, color: Boolean): Outcome =
     CliParser
       .parse(args)
-      .flatMap(analyze(_, baseDir))
+      .flatMap(analyze(_, baseDir, color))
       .fold(failure, identity)
 
   def failure(error: Error): Outcome = Outcome("", error.message + "\n", ErrorCode)
 
-  private def analyze(config: CliConfig, baseDir: Path): Either[Error, Outcome] =
+  private def analyze(config: CliConfig, baseDir: Path, color: Boolean): Either[Error, Outcome] =
     val (entries, missing) = config.classpath.map(Path.of(_)).partition(Files.exists(_))
     val warnings = missing.map(entry => s"Warning: classpath entry does not exist: $entry\n")
     val tasty = TastySource(config.tastyDirs.map(Path.of(_)), entries, baseDir)
     val coverage = ScoverageSource(config.coverageDirs.map(Path.of(_)), baseDir)
     for
-      writer <- Registry.writer(config.format)
+      writer <- Registry.writer(config.format, color)
       rows <- Analyzer.rows(tasty, coverage)
     yield
       val text = writer.render(rows, config.threshold, config.all)
