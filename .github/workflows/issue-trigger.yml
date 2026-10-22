@@ -21,6 +21,6 @@ jobs:
             curl --silent --show-error --fail \
               --request POST \
               --header "Content-Type: application/json" \
-              --header "Authorization: $LOOP_WEBHOOK_KEY" \
+              --header "Authorization: Bearer $LOOP_WEBHOOK_KEY" \
               --data @- \
               "$LOOP_WEBHOOK_URL"
