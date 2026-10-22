@@ -4,7 +4,11 @@ package crap4s
 private[crap4s] object Registry:
   val DefaultFormat: String = "agent"
 
-  val writers: Map[String, ReportWriter] = Map("agent" -> AgentWriter)
+  val writers: Map[String, Boolean => ReportWriter] =
+    Map("agent" -> (_ => AgentWriter), "human" -> (color => HumanWriter(color)))
 
-  def writer(name: String): Either[Error, ReportWriter] =
-    writers.get(name).toRight(Error.UnknownFormat(name, writers.keys.toList.sorted))
+  def writer(name: String, color: Boolean = false): Either[Error, ReportWriter] =
+    writers
+      .get(name)
+      .map(_(color))
+      .toRight(Error.UnknownFormat(name, writers.keys.toList.sorted))

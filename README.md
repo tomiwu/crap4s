@@ -26,7 +26,7 @@ crap4s needs three inputs: the TASTy files of your project, the `-coverage-out` 
 
 Use an absolute path or a path relative to the project root for `<dir>`. Do not compile again after the tests. A new compile with `-coverage-out` resets the directory. The exit code is 0 when no unit is above the threshold. It is 1 when a unit is above the threshold. It is 2 for bad input or an error: the message goes to stderr and stdout stays empty. Refer to `docs/classpath.md` for the classpath options.
 
-The examples use a threshold of 6. The default and only output format is `agent`. It prints one line for each unit above the threshold, worst first: `path:line unit cc=5 cov=0.20 crap=17.80`. Then it prints one summary line: `FAIL 3/100 max=17.80`. When all units pass, it prints only `PASS 100 max=3.10`. Use `--all` to list all units before the summary line.
+The examples use a threshold of 6. The default output format is `agent`. Use `--format human` for an aligned table of all units with a summary line; it uses red for units over the threshold unless `NO_COLOR` is set or stdout is not a TTY. It prints one line for each unit above the threshold, worst first: `path:line unit cc=5 cov=0.20 crap=17.80`. Then it prints one summary line: `FAIL 3/100 max=17.80`. When all units pass, it prints only `PASS 100 max=3.10`. Use `--all` to list all units before the summary line.
 
 ### sbt
 

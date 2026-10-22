@@ -58,7 +58,7 @@ class PortsTest extends FunSuite:
 
   test("the registry lists the known names for an unknown format"):
     val error = Registry.writer("xml").left.toOption.get
-    assertEquals(error.message, "Unknown format: xml. Known formats: agent")
+    assertEquals(error.message, "Unknown format: xml. Known formats: agent, human")
 
   test("the agent writer is the default format"):
     assertEquals(Registry.DefaultFormat, "agent")
