@@ -107,6 +107,7 @@ class CliParserTest extends FunSuite:
         CliParser.parse(List("--tasty", tasty, "--coverage", coverage, "--threshold", value)),
         Left(Error.InvalidThreshold(value))
       )
+
   test("parse --format csv"):
     val (tasty, coverage) = existingDirs("format")
     val result = CliParser.parse(List("--tasty", tasty, "--coverage", coverage, "--format", "csv"))
@@ -117,5 +118,4 @@ class CliParserTest extends FunSuite:
     val result = CliParser.parse(List("--tasty", tasty, "--coverage", coverage, "--format", "xml"))
     assertEquals(result, Left(Error.UnknownFormat("xml", List("csv"))))
     assert(result.left.toOption.get.message.contains("Known formats: csv"))
-
 end CliParserTest
