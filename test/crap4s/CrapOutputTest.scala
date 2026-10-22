@@ -57,15 +57,27 @@ class CrapOutputTest extends FunSuite:
     assert(UnitRow.exceeds(List(row("b", 5, 0.0)), threshold(6.0)))
     assert(!UnitRow.exceeds(List(row("a", 1, 1.0)), threshold(6.0)))
 
-  test("header and plain row"):
+  private def failing = List(row("a", 1, 1.0), row("b", 5, 0.2), row("c", 2, 0.0))
+
+  test("golden: some failing units, worst first, then FAIL summary"):
     assertEquals(
-      CsvWriter.render(List(row("a", 2, 0.5))),
-      "file,line,unit,cc,cov,crap\nA.scala,1,a,2,0.50,2.50\n"
+      AgentWriter.render(failing, threshold(3.0), all = false),
+      "A.scala:1 b cc=5 cov=0.20 crap=17.80\nA.scala:1 c cc=2 cov=0.00 crap=6.00\n" +
+        "FAIL 2/3 max=17.80\n"
     )
 
-  test("fields with commas and quotes are escaped"):
-    assertEquals(CsvWriter.escape("a,b"), "\"a,b\"")
-    assertEquals(CsvWriter.escape("say \"hi\""), "\"say \"\"hi\"\"\"")
-    assertEquals(CsvWriter.escape("plain"), "plain")
-    assertEquals(CsvWriter.escape("a\nb"), "\"a\nb\"")
+  test("golden: all units pass gives only the PASS line"):
+    assertEquals(
+      AgentWriter.render(List(row("a", 1, 1.0), row("c", 2, 0.5)), threshold(6.0), all = false),
+      "PASS 2 max=2.50\n"
+    )
+
+  test("golden: 0 units"):
+    assertEquals(AgentWriter.render(Nil, threshold(6.0), all = false), "PASS 0 max=0.00\n")
+
+  test("--all lists every unit before the summary"):
+    assertEquals(
+      AgentWriter.render(List(row("a", 1, 1.0)), threshold(6.0), all = true),
+      "A.scala:1 a cc=1 cov=1.00 crap=1.00\nPASS 1 max=1.00\n"
+    )
 end CrapOutputTest

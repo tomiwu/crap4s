@@ -23,7 +23,7 @@ class PortsTest extends FunSuite:
     def statements(): Either[Error, List[Statement]] = result
 
   private object FakeWriter extends ReportWriter:
-    def render(rows: List[UnitRow], threshold: Threshold): String =
+    def render(rows: List[UnitRow], threshold: Threshold, all: Boolean): String =
       rows.map(_.unit.value).mkString(",") + "@" + threshold.value
 
   private val statements =
@@ -51,15 +51,15 @@ class PortsTest extends FunSuite:
 
   test("a fake writer renders the rows and the threshold"):
     val rows = Analyzer.rows(FakeUnits(Right(List(unit))), FakeCoverage(Right(Nil))).toOption.get
-    assertEquals(FakeWriter.render(rows, Threshold.Default), "A.f@6.0")
+    assertEquals(FakeWriter.render(rows, Threshold.Default, all = false), "A.f@6.0")
 
-  test("the registry knows csv"):
-    assertEquals(Registry.writer("csv"), Right(CsvWriter))
+  test("the registry knows agent"):
+    assertEquals(Registry.writer("agent"), Right(AgentWriter))
 
   test("the registry lists the known names for an unknown format"):
     val error = Registry.writer("xml").left.toOption.get
-    assertEquals(error.message, "Unknown format: xml. Known formats: csv")
+    assertEquals(error.message, "Unknown format: xml. Known formats: agent")
 
-  test("the csv writer ignores the threshold"):
-    assertEquals(CsvWriter.render(Nil, Threshold.Default), CsvWriter.Header + "\n")
+  test("the agent writer is the default format"):
+    assertEquals(Registry.DefaultFormat, "agent")
 end PortsTest

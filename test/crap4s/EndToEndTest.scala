@@ -27,13 +27,13 @@ class EndToEndTest extends FunSuite:
 
   private def expected(name: String): String = Files.readString(project.resolve(name))
 
-  test("threshold 6 gives the expected CSV and a code that is not 0"):
+  test("threshold 6 gives the expected output and code 1"):
     val outcome = run("--threshold", "6")
-    assertEquals(outcome.out, expected("expected.csv"))
-    assertEquals(outcome.code, Cli.AboveThresholdCode)
+    assertEquals(outcome.out, expected("expected.txt"))
+    assertEquals(outcome.code, 1)
 
-  test("--all gives the expected CSV"):
-    assertEquals(run("--threshold", "6", "--all").out, expected("expected-all.csv"))
+  test("--all gives the expected output"):
+    assertEquals(run("--threshold", "6", "--all").out, expected("expected-all.txt"))
 
   test("a high threshold gives code 0"):
     assertEquals(run("--threshold", "100000").code, 0)

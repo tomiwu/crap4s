@@ -23,19 +23,19 @@ scala-cli compile . "${opts[@]}" -d "$work/classes"
 scala-cli compile . "${opts[@]}" --print-class-path >"$work/classpath.txt"
 scala-cli test . "${opts[@]}"
 
-report="$work/report.csv"
+report="$work/report.txt"
 "$artifact" --tasty "$work/classes" --coverage "$work/coverage" \
   --classpath-file "$work/classpath.txt" --threshold 6 --all >"$report"
 cat "$report"
 
 fail=0
-if [ "$(head -n 1 "$report")" != "file,line,unit,cc,cov,crap" ]; then
-  echo "E2E failed: the CSV header is wrong." >&2
+if ! tail -n 1 "$report" | grep -qE '^(PASS|FAIL) '; then
+  echo "E2E failed: the summary line is wrong." >&2
   fail=1
 fi
 for unit in extension countLines; do
   if ! grep -q "$unit" "$report"; then
-    echo "E2E failed: the unit $unit is missing in the CSV." >&2
+    echo "E2E failed: the unit $unit is missing in the report." >&2
     fail=1
   fi
 done
