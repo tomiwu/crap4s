@@ -39,10 +39,13 @@ class HumanWriterTest extends FunSuite:
         |src/A.scala:3               A.f                               1  100%   1.00
         |3 units, max CRAP 17.80, 1 over threshold
         |""".stripMargin
-    assertEquals(HumanWriter(false).render(rows, Threshold.Default, all = false), expected)
+    assertEquals(
+      HumanWriter(false).render(rows, Threshold.Default, all = false).toOption.get,
+      expected
+    )
 
   test("colour marks only rows above the threshold"):
-    val out = HumanWriter(true).render(rows, Threshold.Default, all = false)
+    val out = HumanWriter(true).render(rows, Threshold.Default, all = false).toOption.get
     val lines = out.linesIterator.toList
     assert(!lines.head.contains(Esc))
     assert(lines(1).startsWith(s"${Esc}31m") && lines(1).endsWith(s"${Esc}0m"))
@@ -50,17 +53,25 @@ class HumanWriterTest extends FunSuite:
     assert(!lines.last.contains(Esc))
 
   test("no colour code appears when colour is off"):
-    assert(!HumanWriter(false).render(rows, Threshold.Default, all = true).contains(Esc))
+    assert(!HumanWriter(false).render(
+      rows,
+      Threshold.Default,
+      all = true
+    ).toOption.get.contains(Esc))
 
   test("columns stay aligned with long unit names"):
-    val lines = HumanWriter(false).render(rows, Threshold.Default, all = true).linesIterator.toList
+    val lines = HumanWriter(false).render(
+      rows,
+      Threshold.Default,
+      all = true
+    ).toOption.get.linesIterator.toList
     val table = lines.init
     assertEquals(table.map(_.length).distinct.size, 1)
     assertEquals(table.map(_.indexOf("cc")).filter(_ >= 0).size, 1)
 
   test("an empty list gives only the summary"):
     assertEquals(
-      HumanWriter(false).render(Nil, Threshold.Default, all = false),
+      HumanWriter(false).render(Nil, Threshold.Default, all = false).toOption.get,
       "file:line  unit  cc  cov  crap\n0 units, max CRAP 0.00, 0 over threshold\n"
     )
 
@@ -72,7 +83,10 @@ class HumanWriterTest extends FunSuite:
         |src/A.scala:3   A.f    1  100%  1.00
         |2 units, max CRAP 2.50, 0 over threshold
         |""".stripMargin
-    assertEquals(HumanWriter(false).render(marked, Threshold.Default, all = false), expected)
+    assertEquals(
+      HumanWriter(false).render(marked, Threshold.Default, all = false).toOption.get,
+      expected
+    )
 
   test("colour is on for a terminal without NO_COLOR"):
     assert(Colour.enabled(_ => None, isTerminal = true))

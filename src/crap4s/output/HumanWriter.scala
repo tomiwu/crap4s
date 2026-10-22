@@ -1,22 +1,23 @@
 package crap4s.output
 
-import crap4s.core.ReportWriter
+import crap4s.core.Error
 import crap4s.core.Threshold
 import crap4s.core.UnitRow
+import crap4s.pipeline.Report
 
 import java.util.Locale
 
 /** Aligned table for a terminal: all units, worst first. Rows above the threshold are red. */
-final class HumanWriter(color: Boolean) extends ReportWriter:
+final class HumanWriter(color: Boolean) extends Report:
   import HumanWriter.*
 
-  def render(rows: List[UnitRow], threshold: Threshold, all: Boolean): String =
+  def render(rows: List[UnitRow], threshold: Threshold, all: Boolean): Either[Error, String] =
     val sorted = UnitRow.select(rows, threshold, all = true)
     val cells = Header :: sorted.map(cellsOf)
     val widths = Table.widths(cells)
     val body = cells.zip(false :: sorted.map(_.crap.isAbove(threshold))).map: (row, over) =>
       paint(Table.format(row, widths), over)
-    (body :+ summary(rows, threshold)).mkString("", "\n", "\n")
+    Right((body :+ summary(rows, threshold)).mkString("", "\n", "\n"))
 
   private def paint(line: String, over: Boolean): String =
     if color && over then s"$Red$line$Reset" else line

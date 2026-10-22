@@ -17,3 +17,15 @@ object UnitRow:
 
   def exceeds(rows: List[UnitRow], threshold: Threshold): Boolean =
     rows.exists(_.crap.isAbove(threshold))
+
+  def fromStats(stats: List[UnitStats]): Either[Error, List[UnitRow]] =
+    Eithers.traverse(stats)(fromStat)
+
+  private def fromStat(stat: UnitStats): Either[Error, UnitRow] =
+    Coverage
+      .from(stat.cov)
+      .map(cov =>
+        UnitRow(stat.unit.file, stat.unit.line, stat.unit.name, stat.unit.cc, cov, stat.noCov)
+      )
+      .left
+      .map(Error.InvalidValue(_))

@@ -2,15 +2,12 @@ package crap4s.cli
 
 import crap4s.core.Error
 import crap4s.core.Threshold
-
-import java.nio.file.Files
-import java.nio.file.Path
-import scala.util.Try
+import crap4s.input.InputFiles
 
 object CliParser:
 
-  def parse(args: List[String]): Either[Error, CliConfig] =
-    readFlags(args).flatMap(toConfig)
+  def parse(args: List[String], files: InputFiles = InputFiles): Either[Error, CliConfig] =
+    readFlags(args, files).flatMap(toConfig(_, files))
 
   private case class Flags(
       tasty: List[String],
@@ -21,39 +18,51 @@ object CliParser:
       format: Format
   )
 
-  private def readFlags(args: List[String]): Either[Error, Flags] =
-    parseLoop(args, Flags(Nil, Nil, Nil, CliConfig.DefaultThreshold, false, Format.Default))
+  private def readFlags(args: List[String], files: InputFiles): Either[Error, Flags] =
+    parseLoop(
+      args,
+      Flags(Nil, Nil, Nil, CliConfig.DefaultThreshold, false, Format.Default),
+      valueOptions(files)
+    )
 
   private type Step = Either[Error, (List[String], Flags)]
 
-  private val valueOptions: Map[String, (Flags, String) => Either[Error, Flags]] = Map(
-    "--tasty" -> ((flags, value) => Right(flags.copy(tasty = flags.tasty :+ value))),
-    "--coverage" -> ((flags, value) => Right(flags.copy(coverage = flags.coverage :+ value))),
-    "--classpath" ->
-      ((flags, value) => Right(flags.copy(classpath = flags.classpath ++ splitEntries(value)))),
-    "--classpath-file" ->
-      ((flags, value) =>
-        readClasspathFile(value).map(entries => flags.copy(classpath = flags.classpath ++ entries))
-      ),
-    "--format" ->
-      ((flags, value) => Format.parse(value).map(format => flags.copy(format = format))),
-    "--threshold" ->
-      ((flags, value) =>
-        parseThreshold(value).map(threshold => flags.copy(threshold = threshold))
-      )
-  )
+  private def valueOptions(files: InputFiles)
+      : Map[String, (Flags, String) => Either[Error, Flags]] =
+    Map(
+      "--tasty" -> ((flags, value) => Right(flags.copy(tasty = flags.tasty :+ value))),
+      "--coverage" -> ((flags, value) => Right(flags.copy(coverage = flags.coverage :+ value))),
+      "--classpath" ->
+        ((flags, value) => Right(flags.copy(classpath = flags.classpath ++ splitEntries(value)))),
+      "--classpath-file" ->
+        ((flags, value) =>
+          files.readString(value).map(splitEntries).map(entries =>
+            flags.copy(classpath = flags.classpath ++ entries)
+          )
+        ),
+      "--format" ->
+        ((flags, value) => Format.parse(value).map(format => flags.copy(format = format))),
+      "--threshold" ->
+        ((flags, value) =>
+          parseThreshold(value).map(threshold => flags.copy(threshold = threshold))
+        )
+    )
 
-  private def parseLoop(rest: List[String], flags: Flags): Either[Error, Flags] =
+  private type Options = Map[String, (Flags, String) => Either[Error, Flags]]
+
+  private def parseLoop(rest: List[String], flags: Flags, options: Options): Either[Error, Flags] =
     rest match
       case Nil => Right(flags)
       case head :: tail =>
-        step(head, tail, flags).flatMap((remaining, next) => parseLoop(remaining, next))
+        step(head, tail, flags, options).flatMap((remaining, next) =>
+          parseLoop(remaining, next, options)
+        )
 
-  private def step(head: String, tail: List[String], flags: Flags): Step =
+  private def step(head: String, tail: List[String], flags: Flags, options: Options): Step =
     (head, tail) match
       case ("--all", _) => Right((tail, flags.copy(all = true)))
       case (option, value :: remaining) =>
-        valueOptions.get(option).fold(unknown(option))(_(flags, value).map((remaining, _)))
+        options.get(option).fold(unknown(option))(_(flags, value).map((remaining, _)))
       case _ => unknown(head)
 
   private def unknown(option: String): Step = Left(Error.UnknownOption(option))
@@ -67,23 +76,18 @@ object CliParser:
   def splitEntries(text: String): List[String] =
     text.split("[:\\r\\n]").toList.map(_.trim).filter(_.nonEmpty)
 
-  private def readClasspathFile(file: String): Either[Error, List[String]] =
-    Try(Files.readString(Path.of(file))).toEither.left
-      .map(e => Error.CannotRead(file, e.getMessage))
-      .map(splitEntries)
-
   private def required(option: String, values: List[String]): Either[Error, List[String]] =
     if values.isEmpty then Left(Error.MissingOption(option)) else Right(values)
 
-  private def toConfig(flags: Flags): Either[Error, CliConfig] =
+  private def toConfig(flags: Flags, files: InputFiles): Either[Error, CliConfig] =
     for
       tasty <- required("--tasty", flags.tasty)
       coverage <- required("--coverage", flags.coverage)
-      _ <- requireDirectories(tasty ++ coverage)
+      _ <- requireDirectories(tasty ++ coverage, files)
     yield CliConfig(tasty, coverage, flags.classpath, flags.threshold, flags.all, flags.format)
 
-  private def requireDirectories(paths: List[String]): Either[Error, Unit] =
-    paths.find(path => !Files.isDirectory(Path.of(path))) match
+  private def requireDirectories(paths: List[String], files: InputFiles): Either[Error, Unit] =
+    paths.find(path => !files.isDirectory(path)) match
       case Some(path) => Left(Error.MissingDirectory(path))
       case None => Right(())
 end CliParser

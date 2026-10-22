@@ -7,10 +7,10 @@ import munit.FunSuite
 class RegistryTest extends FunSuite:
 
   test("the registry knows agent"):
-    assertEquals(Registry.writer(Format.Agent), AgentWriter)
+    assertEquals(Registry.report(Format.Agent), AgentWriter)
 
   test("the registry builds the human writer"):
-    Registry.writer(Format.Human, color = true) match
+    Registry.report(Format.Human, color = true) match
       case _: HumanWriter => ()
       case other => fail(s"Expected HumanWriter, got $other")
 
