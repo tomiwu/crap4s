@@ -30,12 +30,14 @@ class PipelineTest extends FunSuite:
 
   private val covered = List(Statement("src/A.scala", 5, 10, true))
 
-  private val realMapping = Mapping(mapCoverage)
-  private val realScoring = Scoring(rowsFromStats)
+  private val realMapping = Mapping(i => Right(Mapped(mapCoverage(i.units, i.statements))))
+  private val realScoring = Scoring(m => rowsFromStats(m.stats).map(Scored(_)))
 
   private def fakeReport(result: Either[Error, String] = Right("report")): Report =
-    Report: (rows, threshold, _) =>
-      result.map(_ + ":" + rows.map(_.unit.value).mkString(",") + "@" + threshold.value)
+    Report: scored =>
+      result.map: text =>
+        val names = scored.rows.map(_.unit.value).mkString(",")
+        Result.of(scored, Threshold.Default, text + ":" + names + "@" + Threshold.Default.value)
 
   private def run(
       units: Either[Error, List[CodeUnit]],
@@ -49,7 +51,21 @@ class PipelineTest extends FunSuite:
     given Mapping = mapping
     given Scoring = scoring
     given Report = report
-    pipeline(Threshold.Default, all = false)
+    pipeline
+
+  test("via passes the value of a Right to the stage"):
+    val right: Either[Error, Int] = Right(2)
+    assertEquals(right.via(n => Right(n * 3)), Right(6))
+
+  test("via keeps a Left and skips the stage"):
+    val error = Error.MissingOption("--x")
+    val left: Either[Error, Int] = Left(error)
+    var called = false
+    val result = left.via: n =>
+      called = true
+      Right(n)
+    assertEquals(result, Left(error))
+    assert(!called)
 
   test("a covered simple unit passes"):
     assertEquals(
@@ -74,9 +90,9 @@ class PipelineTest extends FunSuite:
 
   test("the mapping gets the units and the statements"):
     val seen = List.newBuilder[(Int, Int)]
-    val spy = Mapping: (found, statements) =>
-      seen += ((found.size, statements.size))
-      Nil
+    val spy = Mapping: inputs =>
+      seen += ((inputs.units.size, inputs.statements.size))
+      Right(Mapped(Nil))
     val _ = run(Right(List(unit(1))), Right(covered), mapping = spy)
     assertEquals(seen.result(), List((1, 1)))
 
@@ -93,6 +109,6 @@ class PipelineTest extends FunSuite:
       valid(Complexity.from(30)),
       valid(crap4s.core.Coverage.from(0.0))
     )
-    val result = run(Right(Nil), Right(Nil), scoring = Scoring(_ => Right(List(row))))
+    val result = run(Right(Nil), Right(Nil), scoring = Scoring(_ => Right(Scored(List(row)))))
     assertEquals(result, Right(Result("report:A.fake@6.0", ExitCode.OverThreshold)))
 end PipelineTest

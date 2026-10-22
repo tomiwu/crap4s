@@ -1,55 +1,70 @@
 package crap4s.pipeline
 
+import crap4s.cli.ExitCode
 import crap4s.core.CodeUnit
 import crap4s.core.Error
 import crap4s.core.Statement
 import crap4s.core.Threshold
 import crap4s.core.UnitRow
 import crap4s.core.UnitStats
+import crap4s.core.anyExceeds
+
+/** The input of the mapping stage: the units and the coverage statements. */
+final case class Inputs(units: List[CodeUnit], statements: List[Statement])
+
+object Inputs:
+  def load(using u: Units, c: Coverage): Either[Error, Inputs] =
+    for
+      found <- u()
+      statements <- c()
+    yield Inputs(found, statements)
+
+/** The output of the mapping stage: the statistics of each unit. */
+final case class Mapped(stats: List[UnitStats])
+
+/** The output of the scoring stage: the CRAP rows. */
+final case class Scored(rows: List[UnitRow])
+
+/** The text for stdout and the exit code of a run. */
+final case class Result(out: String, code: ExitCode)
+
+object Result:
+  def of(scored: Scored, threshold: Threshold, out: String): Result =
+    Result(
+      out,
+      if anyExceeds(scored.rows, threshold) then ExitCode.OverThreshold else ExitCode.Pass
+    )
 
 /** Capability: the units of the analyzed code. */
-opaque type Units = () => Either[Error, List[CodeUnit]]
+opaque type Units <: () => Either[Error, List[CodeUnit]] = () => Either[Error, List[CodeUnit]]
 
 object Units:
   def apply(f: () => Either[Error, List[CodeUnit]]): Units = f
 
-  extension (u: Units) def run(): Either[Error, List[CodeUnit]] = u()
-
 /** Capability: the statements of the coverage report. */
-opaque type Coverage = () => Either[Error, List[Statement]]
+opaque type Coverage <: () => Either[Error, List[Statement]] =
+  () => Either[Error, List[Statement]]
 
 object Coverage:
   def apply(f: () => Either[Error, List[Statement]]): Coverage = f
 
-  extension (c: Coverage) def run(): Either[Error, List[Statement]] = c()
-
 /** Capability: assigns the coverage statements to the units. */
-opaque type Mapping = (List[CodeUnit], List[Statement]) => List[UnitStats]
+opaque type Mapping <: Inputs => Either[Error, Mapped] = Inputs => Either[Error, Mapped]
 
 object Mapping:
-  def apply(f: (List[CodeUnit], List[Statement]) => List[UnitStats]): Mapping = f
-
-  extension (m: Mapping)
-    def run(units: List[CodeUnit], statements: List[Statement]): List[UnitStats] =
-      m(units, statements)
+  def apply(f: Inputs => Either[Error, Mapped]): Mapping = f
 
 /** Capability: computes the CRAP rows from the unit statistics. */
-opaque type Scoring = List[UnitStats] => Either[Error, List[UnitRow]]
+opaque type Scoring <: Mapped => Either[Error, Scored] = Mapped => Either[Error, Scored]
 
 object Scoring:
-  def apply(f: List[UnitStats] => Either[Error, List[UnitRow]]): Scoring = f
+  def apply(f: Mapped => Either[Error, Scored]): Scoring = f
 
-  extension (s: Scoring) def run(stats: List[UnitStats]): Either[Error, List[UnitRow]] = s(stats)
-
-/** Capability: renders the analyzed units as text. `all` lists every unit. */
-opaque type Report = (List[UnitRow], Threshold, Boolean) => Either[Error, String]
+/** Capability: renders the scored units as text and decides the exit code. */
+opaque type Report <: Scored => Either[Error, Result] = Scored => Either[Error, Result]
 
 object Report:
-  def apply(f: (List[UnitRow], Threshold, Boolean) => Either[Error, String]): Report = f
-
-  extension (r: Report)
-    def run(rows: List[UnitRow], threshold: Threshold, all: Boolean): Either[Error, String] =
-      r(rows, threshold, all)
+  def apply(f: Scored => Either[Error, Result]): Report = f
 
 def units(using u: Units): Units = u
 def coverage(using c: Coverage): Coverage = c

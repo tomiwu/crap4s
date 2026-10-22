@@ -28,23 +28,23 @@ Each rule has one reason. Source tags:
 15. **Write modules as capabilities (opaque function types) and use them with `?=>`.** Wire them only in `App.scala`. Put the flow only in `Pipeline.scala`. Only `Main` and the input adapters touch files or the console. [S3] Reason: the flow has no wiring and no side effects, so a test can give it fake modules.
 
     ```scala
-    // Capabilities.scala: a module is an opaque function type
-    opaque type Units = () => Either[Error, List[CodeUnit]]
+    // Capabilities.scala: a module is an opaque function type with the function type as upper bound
+    opaque type Units <: () => Either[Error, List[CodeUnit]] = () => Either[Error, List[CodeUnit]]
     object Units:
       def apply(f: () => Either[Error, List[CodeUnit]]): Units = f
-      extension (u: Units) def run(): Either[Error, List[CodeUnit]] = u()
-    def units(using u: Units): Units = u
+    def mapping(using m: Mapping): Mapping = m
 
-    // Pipeline.scala: the flow asks for the modules with ?=>
-    def pipeline(t: Threshold): (Units, Report) ?=> Either[Error, Result] =
-      for
-        found <- units.run()
-        text <- report.run(UnitRow.fromStats(found), t)
-      yield Result(text)
+    // Pipeline.scala: the flow is one via chain and asks for the modules with ?=>
+    def pipeline: (Units, Coverage, Mapping, Scoring, Report) ?=> Either[Error, Result] =
+      Inputs.load
+        .via(mapping)
+        .via(scoring)
+        .via(report)
 
     // App.scala: the only place that picks the implementations
-    given Units = TastySource.at(config.tastyDirs, entries, baseDir)
-    pipeline(config.threshold)
+    given Units = tastyUnitsAt(config.tastyDirs, entries, baseDir)
+    given Report = reportFor(config.format, config.threshold, config.all, color)
+    pipeline
     ```
 
 ## 3. Formatting (scalafmt)
