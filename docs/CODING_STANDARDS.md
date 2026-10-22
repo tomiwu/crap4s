@@ -47,6 +47,47 @@ Each rule has one reason. Source tags:
     pipeline
     ```
 
+16. **Use top-level defs in place of helper objects (`CapabilityObject`).** An `object` that holds only defs is not allowed. The companion of an opaque type and `App` are allowed. [S3] Reason: Scala 3 has top-level definitions, so the object adds only a name.
+
+    ```scala
+    // Good
+    def parseLine(line: String): Option[Entry] = ...
+
+    // Bad
+    object LineParser:
+      def parseLine(line: String): Option[Entry] = ...
+    ```
+
+17. **Inline a pass-through def (`PassThrough`).** Do not write a def whose body only calls another function with its own parameters or constants. [S3] Reason: the def adds a name and a call, but no logic. Use `@nowarn("crap4s:passthrough")` only when the def is necessary.
+
+    ```scala
+    // Good
+    names.map(_.trim)
+
+    // Bad
+    def trimAll(names: List[String]): List[String] = names.map(_.trim)
+    ```
+
+18. **Do not extend a capability (`NoExtendsCapability`).** No class, object or enum case extends a capability. Give a function value to the capability constructor. [S3] Reason: a capability is a function type, so a function is its only implementation.
+
+    ```scala
+    // Good
+    val units: Units = Units(() => Right(Nil))
+
+    // Bad
+    object NoUnits extends Units
+    ```
+
+19. **Give a capability only in `App.scala` (`GivenOnlyInApp`).** A `given` of a capability is only in `App.scala`. Test sources are allowed. [S3] Reason: one place picks the implementations.
+
+    ```scala
+    // Good: in App.scala
+    given Units = tastyUnitsAt(config.tastyDirs, entries, baseDir)
+
+    // Bad: in Pipeline.scala
+    given Units = () => Right(Nil)
+    ```
+
 ## 3. Formatting (scalafmt)
 
 Proposed `.scalafmt.conf` in the repository root (scalafmt 3.11.5 is the newest release on Maven Central on 2026-10-20):
@@ -112,13 +153,9 @@ OrganizeImports {
 
 Note: `RemoveUnused` and `OrganizeImports.removeUnused` need `-Wunused:all`.
 
-The local rule `PassThrough` (`scalafix/PassThrough.scala`, enabled in `.scalafix.conf`) flags a `def` whose body only calls another function with its own parameters or constants. Inline such a def. The rule skips overrides, defs in a type with parents, a companion `apply` and defs with `@nowarn("crap4s:passthrough")`. The `lint` job fails on 1 or more findings. Scalafix local rules are Scala 2.13 code, so `scalafix/` is its own Scala CLI project with its own tests (`scala-cli test scalafix`). The main build excludes it, and scalafmt skips it.
+Rules 16 to 19 describe the local rules. The local rule `PassThrough` (`scalafix/PassThrough.scala`, enabled in `.scalafix.conf`) flags a `def` whose body only calls another function with its own parameters or constants. Inline such a def. The rule skips overrides, defs in a type with parents, a companion `apply` and defs with `@nowarn("crap4s:passthrough")`. The `lint` job fails on 1 or more findings. Scalafix local rules are Scala 2.13 code, so `scalafix/` is its own Scala CLI project with its own tests (`scala-cli test scalafix`). The main build excludes it, and scalafmt skips it.
 
-Three more local rules guard the capability style. They are in `scalafix/` and use the names in `CapabilityStyle` in `.scalafix.conf`.
-
-- `NoExtendsCapability`: no class, object or enum case extends a capability.
-- `CapabilityObject`: no `object` holds only defs. The companion of an opaque type and `App` are allowed.
-- `GivenOnlyInApp`: a `given` of a capability is only in `App.scala`. Test sources are allowed.
+Three more local rules guard the capability style (`NoExtendsCapability`, `CapabilityObject`, `GivenOnlyInApp`). They are in `scalafix/` and use the names in `CapabilityStyle` in `.scalafix.conf`.
 
 When you add a capability, add its name to `CapabilityStyle`.
 
