@@ -1,0 +1,26 @@
+name: Issue trigger
+on:
+  issues:
+    types: [opened, reopened]
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call the loop webhook
+        env:
+          LOOP_WEBHOOK_URL: ${{ secrets.LOOP_WEBHOOK_URL }}
+          LOOP_WEBHOOK_KEY: ${{ secrets.LOOP_WEBHOOK_KEY }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+        run: |
+          if [ -z "$LOOP_WEBHOOK_URL" ] || [ -z "$LOOP_WEBHOOK_KEY" ]; then
+            exit 0
+          fi
+          jq -n --argjson number "$ISSUE_NUMBER" --arg title "$ISSUE_TITLE" \
+            '{number: $number, title: $title}' |
+            curl --silent --show-error --fail \
+              --request POST \
+              --header "Content-Type: application/json" \
+              --header "Authorization: $LOOP_WEBHOOK_KEY" \
+              --data @- \
+              "$LOOP_WEBHOOK_URL"
