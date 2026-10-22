@@ -80,4 +80,12 @@ class CrapOutputTest extends FunSuite:
       AgentWriter.render(List(row("a", 1, 1.0)), threshold(6.0), all = true),
       "A.scala:1 a cc=1 cov=1.00 crap=1.00\nPASS 1 max=1.00\n"
     )
+
+  test("golden: a failing unit with no-cov gets the marker at the end of its line"):
+    val rows = List(row("a", 5, 0.0).copy(noCov = true), row("b", 5, 0.0))
+    assertEquals(
+      AgentWriter.render(rows, threshold(6.0), all = false),
+      "A.scala:1 a cc=5 cov=0.00 crap=30.00 no-cov\nA.scala:1 b cc=5 cov=0.00 crap=30.00\n" +
+        "FAIL 2/2 max=30.00\n"
+    )
 end CrapOutputTest

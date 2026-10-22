@@ -61,4 +61,19 @@ class CoverageMapperTest extends FunSuite:
   test("a unit without statements has the default coverage"):
     assertEquals(covs(List(unit("f", 0, 50)), Nil), List(CoverageMapper.NoStatementsCoverage))
     assertEquals(CoverageMapper.NoStatementsCoverage, 0.0)
+
+  test("a unit without statements has coverage 0.0, the no-cov flag and CRAP cc² + cc"):
+    val stats = CoverageMapper.map(List(unit("f", 0, 50)), Nil).head
+    assertEquals(stats.cov, 0.0)
+    assert(stats.noCov)
+    assertEqualsDouble(
+      Crap.of(stats.unit.cc, valid(Coverage.from(stats.cov))).value,
+      stats.unit.cc.value * (stats.unit.cc.value + 1.0),
+      1e-9
+    )
+
+  test("a unit with statements and none executed has coverage 0.0 and no flag"):
+    val stats = CoverageMapper.map(List(unit("f", 0, 50)), List(stmt(5, 10, false))).head
+    assertEquals(stats.cov, 0.0)
+    assert(!stats.noCov)
 end CoverageMapperTest

@@ -21,7 +21,7 @@ end HumanWriter
 object HumanWriter:
   private val Red = "\u001b[31m"
   private val Reset = "\u001b[0m"
-  private val Header = List("file:line", "unit", "cc", "cov", "crap")
+  private val Header = List("file:line", "unit", "cc", "cov", "crap", "")
 
   private def cellsOf(row: UnitRow): List[String] =
     List(
@@ -29,7 +29,8 @@ object HumanWriter:
       row.unit.value,
       row.cc.value.toString,
       s"${Math.round(row.cov.value * 100)}%",
-      number(row.crap.value)
+      number(row.crap.value),
+      if row.noCov then "no-cov" else ""
     )
 
   private[crap4s] def summary(rows: List[UnitRow], threshold: Threshold): String =

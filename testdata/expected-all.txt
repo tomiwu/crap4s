@@ -3,7 +3,7 @@ src/demo/Demo.scala:13 demo.Demo.describe cc=4 cov=0.75 crap=4.25
 src/demo/Demo.scala:8 demo.Demo.sign cc=3 cov=0.80 crap=3.07
 src/demo/Demo.scala:18 demo.Demo.bothPositive cc=2 cov=1.00 crap=2.00
 src/demo/Demo.scala:20 demo.Demo.countDown cc=2 cov=1.00 crap=2.00
-src/demo/Demo.scala:5 demo.Demo$package.twice cc=1 cov=0.00 crap=2.00
+src/demo/Demo.scala:5 demo.Demo$package.twice cc=1 cov=0.00 crap=2.00 no-cov
 src/demo/Demo.scala:28 demo.Demo.parse cc=1 cov=0.67 crap=1.04
 src/demo/Demo.scala:32 demo.Demo.doubled cc=1 cov=1.00 crap=1.00
 src/demo/Demo.scala:3 demo.Point.norm1 cc=1 cov=1.00 crap=1.00

@@ -5,7 +5,8 @@ final case class UnitRow(
     line: SourceLine,
     unit: UnitName,
     cc: Complexity,
-    cov: Coverage
+    cov: Coverage,
+    noCov: Boolean = false
 ):
   def crap: CrapScore = Crap.of(cc, cov)
 

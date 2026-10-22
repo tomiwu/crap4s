@@ -3,10 +3,16 @@ package crap4s
 final case class UnitStats(unit: CodeUnit, total: Int, executed: Int):
   /** Executed share of the statements. A unit without statements has `NoStatementsCoverage`. */
   def cov: Double =
-    if total == 0 then CoverageMapper.NoStatementsCoverage else executed.toDouble / total
+    if noCov then CoverageMapper.NoStatementsCoverage else executed.toDouble / total
+
+  /** True when the report has no statements for the unit. The output marks it `no-cov`. */
+  def noCov: Boolean = total == 0
 
 object CoverageMapper:
-  /** Default for a unit that has no statements in the report (PRD decision is TBD). */
+  /**
+   * Default for a unit that has no statements in the report (PRD decision: coverage 0.0, so CRAP =
+   * cc² + cc).
+   */
   val NoStatementsCoverage: Double = 0.0
 
   /** Assigns each statement to the narrowest unit whose range `[start, end)` contains it. */
