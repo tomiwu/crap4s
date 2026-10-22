@@ -13,4 +13,4 @@ import java.nio.file.Path
   val outcome = Cli.run(args.toList, Path.of("").toAbsolutePath, color)
   print(outcome.out)
   Console.err.print(outcome.err)
-  sys.exit(outcome.code)
+  sys.exit(outcome.code.value)

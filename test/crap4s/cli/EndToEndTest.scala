@@ -30,11 +30,11 @@ class EndToEndTest extends FunSuite:
   test("threshold 6 gives the expected output and code 1"):
     val outcome = run("--threshold", "6")
     assertEquals(outcome.out, expected("expected.txt"))
-    assertEquals(outcome.code, 1)
+    assertEquals(outcome.code, ExitCode.OverThreshold)
 
   test("--all gives the expected output"):
     assertEquals(run("--threshold", "6", "--all").out, expected("expected-all.txt"))
 
   test("a high threshold gives code 0"):
-    assertEquals(run("--threshold", "100000").code, 0)
+    assertEquals(run("--threshold", "100000").code, ExitCode.Pass)
 end EndToEndTest

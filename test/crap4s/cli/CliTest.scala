@@ -27,7 +27,7 @@ class CliTest extends FunSuite:
 
   test("a unit above the threshold gives code 1 and sorted agent lines"):
     val outcome = run("--threshold", "6")
-    assertEquals(outcome.code, 1)
+    assertEquals(outcome.code, ExitCode.OverThreshold)
     val lines = outcome.out.linesIterator.toList
     assert(lines.last.startsWith("FAIL "), outcome.out)
     val scores = lines.init.map(_.split("crap=").last.toDouble)
@@ -36,7 +36,7 @@ class CliTest extends FunSuite:
 
   test("no unit above the threshold gives code 0 and only the PASS line"):
     val outcome = run("--threshold", "100000")
-    assertEquals(outcome.code, 0)
+    assertEquals(outcome.code, ExitCode.Pass)
     assert(outcome.out.matches("PASS \\d+ max=\\d+\\.\\d\\d\n"), outcome.out)
 
   test("--all lists every unit"):
@@ -46,7 +46,7 @@ class CliTest extends FunSuite:
 
   test("a bad option gives the error code and a message"):
     val outcome = Cli.run(List("--bogus"), base)
-    assertEquals(outcome.code, 2)
+    assertEquals(outcome.code, ExitCode.Error)
     assert(outcome.err.contains("Unknown option: --bogus"))
     assertEquals(outcome.out, "")
 
@@ -54,21 +54,21 @@ class CliTest extends FunSuite:
     val error = Error.InvalidValue(ValidationError.InvalidCoverage(2.0))
     assertEquals(
       Cli.failure(error),
-      Outcome("", "Coverage must be from 0.0 to 1.0: 2.0\n", 2)
+      Outcome("", "Coverage must be from 0.0 to 1.0: 2.0\n", ExitCode.Error)
     )
 
   test("a missing directory gives code 2 and nothing on stdout"):
     val outcome = Cli.run(List("--tasty", "/no/such", "--coverage", "/no/such"), base)
-    assertEquals(outcome.code, 2)
+    assertEquals(outcome.code, ExitCode.Error)
     assertEquals(outcome.out, "")
     assert(outcome.err.contains("/no/such"))
 
   test("--help prints the usage and gives code 0"):
     val outcome = Cli.run(List("--help"), base)
-    assertEquals(outcome.code, 0)
+    assertEquals(outcome.code, ExitCode.Pass)
     assert(outcome.out.startsWith("Usage: crap4s"))
     assertEquals(outcome.err, "")
 
   test("--help wins over other options"):
-    assertEquals(Cli.run(List("--bogus", "--help"), base).code, 0)
+    assertEquals(Cli.run(List("--bogus", "--help"), base).code, ExitCode.Pass)
 end CliTest

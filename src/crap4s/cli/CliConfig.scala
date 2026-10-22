@@ -8,7 +8,7 @@ final case class CliConfig(
     classpath: List[String],
     threshold: Threshold,
     all: Boolean,
-    format: String = Registry.DefaultFormat
+    format: Format = Format.Default
 )
 
 object CliConfig:

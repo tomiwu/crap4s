@@ -1,6 +1,5 @@
 package crap4s.output
 
-import crap4s.cli.Registry
 import crap4s.core.Complexity
 import crap4s.core.Coverage
 import crap4s.core.SourceLine
@@ -83,7 +82,4 @@ class HumanWriterTest extends FunSuite:
 
   test("colour is off when stdout is not a terminal"):
     assert(!Colour.enabled(_ => None, isTerminal = false))
-
-  test("the registry builds the human writer"):
-    assert(Registry.writer("human").isRight)
 end HumanWriterTest
