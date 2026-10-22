@@ -32,7 +32,7 @@ object HumanWriter:
       number(row.crap.value)
     )
 
-  def summary(rows: List[UnitRow], threshold: Threshold): String =
+  private[crap4s] def summary(rows: List[UnitRow], threshold: Threshold): String =
     val over = rows.count(_.crap.isAbove(threshold))
     val max = number(rows.map(_.crap.value).maxOption.getOrElse(0.0))
     s"${rows.size} units, max CRAP $max, $over over threshold"
