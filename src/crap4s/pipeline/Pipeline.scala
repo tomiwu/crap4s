@@ -1,7 +1,6 @@
 package crap4s.pipeline
 
 import crap4s.cli.ExitCode
-import crap4s.core.CoverageMapper
 import crap4s.core.Error
 import crap4s.core.Threshold
 import crap4s.core.UnitRow
@@ -13,12 +12,12 @@ final case class Result(out: String, code: ExitCode)
 def pipeline(
     threshold: Threshold,
     all: Boolean
-): (Units, Coverage, Report) ?=> Either[Error, Result] =
+): (Units, Coverage, Mapping, Scoring, Report) ?=> Either[Error, Result] =
   for
-    found <- units.units()
-    statements <- coverage.statements()
-    rows <- UnitRow.fromStats(CoverageMapper.map(found, statements))
-    text <- report.render(rows, threshold, all)
+    found <- units.run()
+    statements <- coverage.run()
+    rows <- scoring.run(mapping.run(found, statements))
+    text <- report.run(rows, threshold, all)
   yield Result(text, exitCode(rows, threshold))
 
 private def exitCode(rows: List[UnitRow], threshold: Threshold): ExitCode =

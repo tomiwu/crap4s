@@ -25,19 +25,21 @@ Each rule has one reason. Source tags:
 12. **Report errors as values** (`Either[Error, A]` with an `enum Error`). Throw only in the CLI layer, and only to exit. [S3] Reason: errors stay visible in types.
 13. **Use immutable collections and `Vector`/`List`.** [S3] Reason: no shared mutable state.
 14. **Keep the CRAP score of every unit below 4**: small methods, few branches, high coverage. [crap4s project rule] Reason: the tool must pass its own gate.
-15. **Write modules as capability traits and use them with `?=>`.** Wire them only in `App.scala`. Put the flow only in `Pipeline.scala`. Only `Main` and the input adapters touch files or the console. [S3] Reason: the flow has no wiring and no side effects, so a test can give it fake modules.
+15. **Write modules as capabilities (opaque function types) and use them with `?=>`.** Wire them only in `App.scala`. Put the flow only in `Pipeline.scala`. Only `Main` and the input adapters touch files or the console. [S3] Reason: the flow has no wiring and no side effects, so a test can give it fake modules.
 
     ```scala
-    // Capabilities.scala: a module is a trait
-    trait Units:
-      def units(): Either[Error, List[CodeUnit]]
+    // Capabilities.scala: a module is an opaque function type
+    opaque type Units = () => Either[Error, List[CodeUnit]]
+    object Units:
+      def apply(f: () => Either[Error, List[CodeUnit]]): Units = f
+      extension (u: Units) def run(): Either[Error, List[CodeUnit]] = u()
     def units(using u: Units): Units = u
 
     // Pipeline.scala: the flow asks for the modules with ?=>
     def pipeline(t: Threshold): (Units, Report) ?=> Either[Error, Result] =
       for
-        found <- units.units()
-        text <- report.render(UnitRow.fromStats(found), t)
+        found <- units.run()
+        text <- report.run(UnitRow.fromStats(found), t)
       yield Result(text)
 
     // App.scala: the only place that picks the implementations

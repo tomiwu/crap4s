@@ -8,7 +8,8 @@ import crap4s.pipeline.Report
 import java.util.Locale
 
 /** Few-token output: one line for each reported unit, then one summary line. */
-object AgentWriter extends Report:
+object AgentWriter:
+  val report: Report = Report(render)
 
   def render(rows: List[UnitRow], threshold: Threshold, all: Boolean): Either[Error, String] =
     val lines = UnitRow.select(rows, threshold, all).map(line)
