@@ -5,7 +5,8 @@ final case class CliConfig(
     coverageDirs: List[String],
     classpath: List[String],
     threshold: Threshold,
-    all: Boolean
+    all: Boolean,
+    format: String = Registry.DefaultFormat
 )
 
 object CliConfig:

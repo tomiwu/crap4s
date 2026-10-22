@@ -3,6 +3,8 @@ package crap4s
 enum Error(val message: String):
   case UnknownOption(option: String) extends Error(s"Unknown option: $option")
   case InvalidThreshold(value: String) extends Error(s"Invalid threshold: $value")
+  case UnknownFormat(name: String, known: List[String])
+      extends Error(s"Unknown format: $name. Known formats: ${known.mkString(", ")}")
   case InvalidValue(cause: ValidationError) extends Error(cause.message)
   case MissingOption(option: String) extends Error(s"Missing required option: $option")
   case MissingDirectory(path: String) extends Error(s"Directory does not exist: $path")
