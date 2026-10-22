@@ -1,6 +1,5 @@
 package crap4s.core
 
-import crap4s.output.AgentWriter
 import munit.FunSuite
 
 class PortsTest extends FunSuite:

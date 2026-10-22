@@ -10,7 +10,9 @@ class RegistryTest extends FunSuite:
     assertEquals(Registry.writer(Format.Agent), AgentWriter)
 
   test("the registry builds the human writer"):
-    assert(Registry.writer(Format.Human, color = true).isInstanceOf[HumanWriter])
+    Registry.writer(Format.Human, color = true) match
+      case _: HumanWriter => ()
+      case other => fail(s"Expected HumanWriter, got $other")
 
   test("the agent format is the default"):
     assertEquals(Format.Default, Format.Agent)
