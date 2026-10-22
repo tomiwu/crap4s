@@ -5,14 +5,14 @@ import crap4s.core.Threshold
 import crap4s.core.UnitRow
 import crap4s.core.selectRows
 import crap4s.pipeline.Report
-import crap4s.pipeline.Result
+import crap4s.pipeline.resultOf
 
 import java.util.Locale
 
 /** Few-token output: one line for each reported unit, then one summary line. */
 def agentReport(threshold: Threshold, all: Boolean): Report =
   Report: scored =>
-    renderAgent(scored.rows, threshold, all).map(Result.of(scored, threshold, _))
+    renderAgent(scored.rows, threshold, all).map(resultOf(scored, threshold, _))
 
 def renderAgent(rows: List[UnitRow], threshold: Threshold, all: Boolean): Either[Error, String] =
   val lines = selectRows(rows, threshold, all).map(agentLine)

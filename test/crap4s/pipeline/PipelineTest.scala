@@ -37,7 +37,7 @@ class PipelineTest extends FunSuite:
     Report: scored =>
       result.map: text =>
         val names = scored.rows.map(_.unit.value).mkString(",")
-        Result.of(scored, Threshold.Default, text + ":" + names + "@" + Threshold.Default.value)
+        resultOf(scored, Threshold.Default, text + ":" + names + "@" + Threshold.Default.value)
 
   private def run(
       units: Either[Error, List[CodeUnit]],

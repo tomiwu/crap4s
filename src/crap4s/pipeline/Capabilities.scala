@@ -12,12 +12,12 @@ import crap4s.core.anyExceeds
 /** The input of the mapping stage: the units and the coverage statements. */
 final case class Inputs(units: List[CodeUnit], statements: List[Statement])
 
-object Inputs:
-  def load(using u: Units, c: Coverage): Either[Error, Inputs] =
-    for
-      found <- u()
-      statements <- c()
-    yield Inputs(found, statements)
+/** Loads the units and the coverage statements. */
+def loadInputs(using u: Units, c: Coverage): Either[Error, Inputs] =
+  for
+    found <- u()
+    statements <- c()
+  yield Inputs(found, statements)
 
 /** The output of the mapping stage: the statistics of each unit. */
 final case class Mapped(stats: List[UnitStats])
@@ -28,12 +28,12 @@ final case class Scored(rows: List[UnitRow])
 /** The text for stdout and the exit code of a run. */
 final case class Result(out: String, code: ExitCode)
 
-object Result:
-  def of(scored: Scored, threshold: Threshold, out: String): Result =
-    Result(
-      out,
-      if anyExceeds(scored.rows, threshold) then ExitCode.OverThreshold else ExitCode.Pass
-    )
+/** The result of a run: the exit code depends on the threshold. */
+def resultOf(scored: Scored, threshold: Threshold, out: String): Result =
+  Result(
+    out,
+    if anyExceeds(scored.rows, threshold) then ExitCode.OverThreshold else ExitCode.Pass
+  )
 
 /** Capability: the units of the analyzed code. */
 opaque type Units <: () => Either[Error, List[CodeUnit]] = () => Either[Error, List[CodeUnit]]

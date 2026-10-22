@@ -26,9 +26,9 @@ jobs:
       - uses: VirtusLab/scala-cli-setup@v1
       - name: Compile with warnings as errors
         run: scala-cli compile --test .
-      - name: Test the PassThrough rule
+      - name: Test the Scalafix rules
         run: scala-cli test scalafix
-      - name: Check Scalafix (the PassThrough rule fails on 1 or more findings)
+      - name: Check Scalafix (the local rules fail on 1 or more findings)
         run: scala-cli --power fix --check .
   test:
     runs-on: ubuntu-latest

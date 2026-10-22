@@ -5,14 +5,14 @@ import crap4s.core.Threshold
 import crap4s.core.UnitRow
 import crap4s.core.selectRows
 import crap4s.pipeline.Report
-import crap4s.pipeline.Result
+import crap4s.pipeline.resultOf
 
 import java.util.Locale
 
 /** Aligned table for a terminal: all units, worst first. Rows above the threshold are red. */
 def humanReport(color: Boolean, threshold: Threshold): Report =
   Report: scored =>
-    renderHuman(color, scored.rows, threshold).map(Result.of(scored, threshold, _))
+    renderHuman(color, scored.rows, threshold).map(resultOf(scored, threshold, _))
 
 def renderHuman(color: Boolean, rows: List[UnitRow], threshold: Threshold): Either[Error, String] =
   val sorted = selectRows(rows, threshold, all = true)
