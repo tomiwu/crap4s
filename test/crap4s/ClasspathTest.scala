@@ -29,7 +29,7 @@ class ClasspathTest extends FunSuite:
   private def appArgs(extra: String*): List[String] =
     List("--tasty", app.classes.toString, "--coverage", app.coverage.toString, "--all") ++ extra
 
-  private def units(outcome: Outcome): List[String] = outcome.out.linesIterator.toList.tail
+  private def units(outcome: Outcome): List[String] = outcome.out.linesIterator.toList.init
 
   test("an app without its dependencies gives an error that tells to add the classpath"):
     val outcome = Cli.run(appArgs(), base)
@@ -74,7 +74,7 @@ class ClasspathTest extends FunSuite:
     val rows = units(Cli.run(args, base))
     assert(rows.exists(_.contains("extlib.Base.greet")), rows.toString)
     assert(rows.exists(_.contains("extapp.App.total")), rows.toString)
-    assert(rows.forall(!_.endsWith(",1.0")), rows.toString)
+    assert(rows.forall(!_.contains("cov=1.00")), rows.toString)
 
   test("a missing second coverage directory is an error"):
     val outcome = Cli.run(appArgs("--coverage", "/no/such"), base)

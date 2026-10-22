@@ -9,10 +9,13 @@ object Usage:
       |  --coverage <dir>         Directory with the -coverage-out data. Repeat for more directories.
       |  --classpath <entries>    Dependency classpath. Separate entries with ':'.
       |  --classpath-file <file>  File with the dependency classpath.
-      |  --threshold <number>     Report units with a CRAP score above this number. Default: 6.
-      |  --all                    Report every unit.
-      |  --format <name>          Output format. Known formats: csv. Default: csv.
+      |  --threshold <number>     Fail units with a CRAP score above this number. Default: 6.
+      |  --all                    List every unit, not only the units above the threshold.
+      |  --format <name>          Output format. Known formats: agent. Default: agent.
       |  --help                   Print this text.
       |
-      |Exit codes: 0 = no unit above the threshold, 1 = error, 2 = a unit above the threshold.
+      |Output: one line for each listed unit, worst first, then a summary line
+      |  (PASS <units> max=<crap> or FAIL <failing>/<units> max=<crap>).
+      |Exit codes: 0 = no unit above the threshold, 1 = a unit above the threshold,
+      |  2 = bad input or error (message on stderr).
       |""".stripMargin

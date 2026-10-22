@@ -9,8 +9,8 @@ import java.nio.file.Path
 final case class Outcome(out: String, err: String, code: Int)
 
 object Cli:
-  val AboveThresholdCode: Int = 2
-  val ErrorCode: Int = 1
+  val AboveThresholdCode: Int = 1
+  val ErrorCode: Int = 2
 
   def run(args: List[String], baseDir: Path): Outcome =
     if args.contains("--help") then Outcome(Usage.text, "", 0) else analyzeArgs(args, baseDir)
@@ -19,7 +19,9 @@ object Cli:
     CliParser
       .parse(args)
       .flatMap(analyze(_, baseDir))
-      .fold(error => Outcome("", error.message + "\n", ErrorCode), identity)
+      .fold(failure, identity)
+
+  def failure(error: Error): Outcome = Outcome("", error.message + "\n", ErrorCode)
 
   private def analyze(config: CliConfig, baseDir: Path): Either[Error, Outcome] =
     val (entries, missing) = config.classpath.map(Path.of(_)).partition(Files.exists(_))
@@ -30,7 +32,7 @@ object Cli:
       writer <- Registry.writer(config.format)
       rows <- Analyzer.rows(tasty, coverage)
     yield
-      val text = writer.render(UnitRow.select(rows, config.threshold, config.all), config.threshold)
+      val text = writer.render(rows, config.threshold, config.all)
       val code = if UnitRow.exceeds(rows, config.threshold) then AboveThresholdCode else 0
       Outcome(text, warnings.mkString, code)
 end Cli
