@@ -1,5 +1,8 @@
 package crap4s
 
+import crap4s.cli.Cli
+import crap4s.output.Colour
+
 import java.nio.file.Path
 
 @main def crap(args: String*): Unit =
