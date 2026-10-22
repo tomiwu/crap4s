@@ -4,9 +4,9 @@ final case class CliConfig(
     tastyDirs: List[String],
     coverageDirs: List[String],
     classpath: List[String],
-    threshold: Double,
+    threshold: Threshold,
     all: Boolean
 )
 
 object CliConfig:
-  val DefaultThreshold: Double = 6.0
+  val DefaultThreshold: Threshold = Threshold.Default

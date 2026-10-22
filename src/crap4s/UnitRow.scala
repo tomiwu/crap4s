@@ -1,12 +1,18 @@
 package crap4s
 
-final case class UnitRow(file: String, line: Int, unit: String, cc: Int, cov: Double):
-  def crap: Double = CrapScore.of(cc, cov)
+final case class UnitRow(
+    file: String,
+    line: SourceLine,
+    unit: UnitName,
+    cc: Complexity,
+    cov: Coverage
+):
+  def crap: CrapScore = Crap.of(cc, cov)
 
 object UnitRow:
   /** Keeps the rows above the threshold, or all rows. Sorts by CRAP, highest first. */
-  def select(rows: List[UnitRow], threshold: Double, all: Boolean): List[UnitRow] =
-    rows.filter(row => all || row.crap > threshold).sortBy(row => -row.crap)
+  def select(rows: List[UnitRow], threshold: Threshold, all: Boolean): List[UnitRow] =
+    rows.filter(row => all || row.crap.isAbove(threshold)).sortBy(row => -row.crap.value)
 
-  def exceeds(rows: List[UnitRow], threshold: Double): Boolean =
-    rows.exists(_.crap > threshold)
+  def exceeds(rows: List[UnitRow], threshold: Threshold): Boolean =
+    rows.exists(_.crap.isAbove(threshold))

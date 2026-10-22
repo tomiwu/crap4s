@@ -13,7 +13,7 @@ object CliParser:
       tasty: List[String],
       coverage: List[String],
       classpath: List[String],
-      threshold: Double,
+      threshold: Threshold,
       all: Boolean
   )
 
@@ -52,8 +52,10 @@ object CliParser:
 
   private def unknown(option: String): Step = Left(Error.UnknownOption(option))
 
-  private def parseThreshold(value: String): Either[Error, Double] =
-    value.toDoubleOption.toRight(Error.InvalidThreshold(value))
+  private def parseThreshold(value: String): Either[Error, Threshold] =
+    value.toDoubleOption
+      .toRight(Error.InvalidThreshold(value))
+      .flatMap(raw => Threshold.from(raw).left.map(_ => Error.InvalidThreshold(value)))
 
   /** Entries are separated by `:` or by line breaks. Empty entries are ignored. */
   def splitEntries(text: String): List[String] =
