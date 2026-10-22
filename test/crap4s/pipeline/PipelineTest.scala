@@ -2,8 +2,8 @@ package crap4s.pipeline
 
 import crap4s.cli.ExitCode
 import crap4s.core.CodeUnit
-import crap4s.core.CoverageMapper
 import crap4s.core.Complexity
+import crap4s.core.CoverageMapper
 import crap4s.core.Error
 import crap4s.core.SourceLine
 import crap4s.core.Statement

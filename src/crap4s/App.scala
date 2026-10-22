@@ -5,12 +5,12 @@ import crap4s.cli.CliParser
 import crap4s.cli.ExitCode
 import crap4s.cli.Registry
 import crap4s.cli.Usage
+import crap4s.core.CoverageMapper
 import crap4s.core.Error
+import crap4s.core.UnitRow
 import crap4s.input.InputFiles
 import crap4s.input.scoverage.ScoverageSource
 import crap4s.input.tasty.TastySource
-import crap4s.core.CoverageMapper
-import crap4s.core.UnitRow
 import crap4s.pipeline.Coverage
 import crap4s.pipeline.Mapping
 import crap4s.pipeline.Report

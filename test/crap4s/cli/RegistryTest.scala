@@ -1,8 +1,8 @@
 package crap4s.cli
 
+import crap4s.core.Threshold
 import crap4s.output.AgentWriter
 import crap4s.output.HumanWriter
-import crap4s.core.Threshold
 import munit.FunSuite
 
 class RegistryTest extends FunSuite:
