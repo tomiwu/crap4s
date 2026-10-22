@@ -1,9 +1,8 @@
 package crap4s.cli
 
-import munit.FunSuite
-
 import crap4s.core.Error
 import crap4s.core.ValidationError
+import munit.FunSuite
 
 import java.nio.file.Files
 import java.nio.file.Path

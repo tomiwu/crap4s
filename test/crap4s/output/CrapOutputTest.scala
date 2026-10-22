@@ -1,7 +1,5 @@
 package crap4s.output
 
-import munit.FunSuite
-
 import crap4s.core.Complexity
 import crap4s.core.Coverage
 import crap4s.core.Crap
@@ -10,6 +8,7 @@ import crap4s.core.Threshold
 import crap4s.core.UnitName
 import crap4s.core.UnitRow
 import crap4s.core.ValidationError
+import munit.FunSuite
 
 class CrapOutputTest extends FunSuite:
 
