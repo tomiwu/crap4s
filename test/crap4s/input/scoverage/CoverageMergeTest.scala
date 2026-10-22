@@ -1,7 +1,5 @@
 package crap4s.input.scoverage
 
-import crap4s.input.scoverage.CoverageData
-import crap4s.input.scoverage.CoverageStatement
 import munit.FunSuite
 
 class CoverageMergeTest extends FunSuite:

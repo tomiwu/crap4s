@@ -2,8 +2,6 @@ package crap4s.input.scoverage
 
 import munit.FunSuite
 
-import crap4s.input.scoverage.*
-
 import java.nio.file.Files
 import java.nio.file.Path
 import scala.sys.process.*

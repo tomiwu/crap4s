@@ -1,6 +1,5 @@
 package crap4s.input.tasty
 
-import crap4s.input.tasty.TastyClasspath
 import munit.FunSuite
 
 import java.nio.file.Files
