@@ -18,11 +18,11 @@ object CliParser:
       classpath: List[String],
       threshold: Threshold,
       all: Boolean,
-      format: String
+      format: Format
   )
 
   private def readFlags(args: List[String]): Either[Error, Flags] =
-    parseLoop(args, Flags(Nil, Nil, Nil, CliConfig.DefaultThreshold, false, Registry.DefaultFormat))
+    parseLoop(args, Flags(Nil, Nil, Nil, CliConfig.DefaultThreshold, false, Format.Default))
 
   private type Step = Either[Error, (List[String], Flags)]
 
@@ -35,7 +35,8 @@ object CliParser:
       ((flags, value) =>
         readClasspathFile(value).map(entries => flags.copy(classpath = flags.classpath ++ entries))
       ),
-    "--format" -> ((flags, value) => Registry.writer(value).map(_ => flags.copy(format = value))),
+    "--format" ->
+      ((flags, value) => Format.parse(value).map(format => flags.copy(format = format))),
     "--threshold" ->
       ((flags, value) =>
         parseThreshold(value).map(threshold => flags.copy(threshold = threshold))

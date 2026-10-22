@@ -63,7 +63,7 @@ object UnitName:
 opaque type CrapScore = Double
 
 object CrapScore:
-  private[crap4s] def calculate(cc: Complexity, cov: Coverage): CrapScore =
+  private[core] def calculate(cc: Complexity, cov: Coverage): CrapScore =
     val ccD = cc.value.toDouble
     ccD * ccD * math.pow(1.0 - cov.value, 3) + ccD
 

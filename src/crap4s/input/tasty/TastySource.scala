@@ -2,6 +2,7 @@ package crap4s.input.tasty
 
 import crap4s.core.CodeUnit
 import crap4s.core.Complexity
+import crap4s.core.Eithers
 import crap4s.core.Error
 import crap4s.core.SourceLine
 import crap4s.core.UnitName
@@ -22,11 +23,7 @@ final class TastySource(tastyDirs: List[Path], classpath: List[Path], baseDir: P
 
   private def toUnits(tasty: TastyLoadResult): Either[Error, List[CodeUnit]] =
     given Context = tasty.context
-    tasty.methods.foldRight(Right(Nil): Either[Error, List[CodeUnit]]): (method, acc) =>
-      for
-        rest <- acc
-        unit <- toUnit(method)
-      yield unit :: rest
+    Eithers.traverse(tasty.methods)(toUnit)
 
   private def toUnit(method: LoadedMethod)(using Context): Either[Error, CodeUnit] =
     val position = method.position

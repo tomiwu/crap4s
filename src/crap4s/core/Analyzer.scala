@@ -9,11 +9,7 @@ object Analyzer:
     yield rows
 
   private def toRows(stats: List[UnitStats]): Either[Error, List[UnitRow]] =
-    stats.foldRight(Right(Nil): Either[Error, List[UnitRow]]): (stat, acc) =>
-      for
-        rest <- acc
-        row <- toRow(stat)
-      yield row :: rest
+    Eithers.traverse(stats)(toRow)
 
   private def toRow(stat: UnitStats): Either[Error, UnitRow] =
     Coverage

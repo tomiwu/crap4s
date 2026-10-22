@@ -9,14 +9,11 @@ import crap4s.input.tasty.TastySource
 import java.nio.file.Files
 import java.nio.file.Path
 
-final case class Outcome(out: String, err: String, code: Int)
+final case class Outcome(out: String, err: String, code: ExitCode)
 
 object Cli:
-  val AboveThresholdCode: Int = 1
-  val ErrorCode: Int = 2
-
   def run(args: List[String], baseDir: Path, color: Boolean = false): Outcome =
-    if args.contains("--help") then Outcome(Usage.text, "", 0)
+    if args.contains("--help") then Outcome(Usage.text, "", ExitCode.Pass)
     else analyzeArgs(args, baseDir, color)
 
   private def analyzeArgs(args: List[String], baseDir: Path, color: Boolean): Outcome =
@@ -25,7 +22,7 @@ object Cli:
       .flatMap(analyze(_, baseDir, color))
       .fold(failure, identity)
 
-  def failure(error: Error): Outcome = Outcome("", error.message + "\n", ErrorCode)
+  def failure(error: Error): Outcome = Outcome("", error.message + "\n", ExitCode.Error)
 
   private def analyze(config: CliConfig, baseDir: Path, color: Boolean): Either[Error, Outcome] =
     val (entries, missing) = config.classpath.map(Path.of(_)).partition(Files.exists(_))
@@ -33,10 +30,11 @@ object Cli:
     val tasty = TastySource(config.tastyDirs.map(Path.of(_)), entries, baseDir)
     val coverage = ScoverageSource(config.coverageDirs.map(Path.of(_)), baseDir)
     for
-      writer <- Registry.writer(config.format, color)
       rows <- Analyzer.rows(tasty, coverage)
     yield
+      val writer = Registry.writer(config.format, color)
       val text = writer.render(rows, config.threshold, config.all)
-      val code = if UnitRow.exceeds(rows, config.threshold) then AboveThresholdCode else 0
+      val code =
+        if UnitRow.exceeds(rows, config.threshold) then ExitCode.OverThreshold else ExitCode.Pass
       Outcome(text, warnings.mkString, code)
 end Cli

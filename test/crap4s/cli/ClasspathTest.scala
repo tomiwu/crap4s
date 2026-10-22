@@ -33,30 +33,30 @@ class ClasspathTest extends FunSuite:
 
   test("an app without its dependencies gives an error that tells to add the classpath"):
     val outcome = Cli.run(appArgs(), base)
-    assertEquals(outcome.code, Cli.ErrorCode)
+    assertEquals(outcome.code, ExitCode.Error)
     assert(outcome.err.contains("--classpath"), outcome.err)
     assert(!outcome.err.contains("\tat "), outcome.err)
 
   test("--classpath resolves the dependencies"):
     val outcome = Cli.run(appArgs("--classpath", lib.classes.toString), base)
-    assertEquals(outcome.code, 0, clue = outcome.err)
+    assertEquals(outcome.code, ExitCode.Pass, clue = outcome.err)
     assert(units(outcome).exists(_.contains("extapp.App.total")), outcome.out)
 
   test("--classpath-file resolves the dependencies in the one-line format"):
     val file = Files.writeString(Files.createTempFile("cp", ".txt"), s"${lib.classes}:/no/such\n")
     val outcome = Cli.run(appArgs("--classpath-file", file.toString), base)
-    assertEquals(outcome.code, 0, clue = outcome.err)
+    assertEquals(outcome.code, ExitCode.Pass, clue = outcome.err)
     assert(units(outcome).exists(_.contains("extapp.App.total")), outcome.out)
 
   test("--classpath-file resolves the dependencies in the one-entry-per-line format"):
     val file = Files.writeString(Files.createTempFile("cp", ".txt"), s"\n${lib.classes}\n\n")
     val outcome = Cli.run(appArgs("--classpath-file", file.toString), base)
-    assertEquals(outcome.code, 0, clue = outcome.err)
+    assertEquals(outcome.code, ExitCode.Pass, clue = outcome.err)
     assertEquals(outcome.err, "")
 
   test("a classpath entry that does not exist gives a warning and the run continues"):
     val outcome = Cli.run(appArgs("--classpath", s"/no/such:${lib.classes}"), base)
-    assertEquals(outcome.code, 0, clue = outcome.err)
+    assertEquals(outcome.code, ExitCode.Pass, clue = outcome.err)
     assertEquals(outcome.err, "Warning: classpath entry does not exist: /no/such\n")
 
   test("two TASTy roots and two coverage directories give one merged report"):
@@ -78,6 +78,6 @@ class ClasspathTest extends FunSuite:
 
   test("a missing second coverage directory is an error"):
     val outcome = Cli.run(appArgs("--coverage", "/no/such"), base)
-    assertEquals(outcome.code, Cli.ErrorCode)
+    assertEquals(outcome.code, ExitCode.Error)
     assert(outcome.err.contains("/no/such"))
 end ClasspathTest

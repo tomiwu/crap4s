@@ -37,7 +37,7 @@ object HumanWriter:
       if row.noCov then "no-cov" else ""
     )
 
-  private[crap4s] def summary(rows: List[UnitRow], threshold: Threshold): String =
+  private def summary(rows: List[UnitRow], threshold: Threshold): String =
     val over = rows.count(_.crap.isAbove(threshold))
     val max = number(rows.map(_.crap.value).maxOption.getOrElse(0.0))
     s"${rows.size} units, max CRAP $max, $over over threshold"
@@ -47,7 +47,7 @@ object HumanWriter:
 end HumanWriter
 
 /** Column widths and padding. The first two columns are left aligned, the others right aligned. */
-private[crap4s] object Table:
+private object Table:
   private val LeftColumns = 2
 
   def widths(rows: List[List[String]]): List[Int] =
