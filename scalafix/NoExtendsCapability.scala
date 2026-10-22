@@ -22,9 +22,8 @@ class NoExtendsCapability(configured: List[String]) extends SyntacticRule("NoExt
 object NoExtendsCapability {
   final case class Finding(message: String, position: Position)
 
-  def findings(tree: Tree, names: Set[String]): List[Finding] = {
+  def findings(tree: Tree, names: Set[String]): List[Finding] =
     inits(tree).flatMap(i => baseName(i.tpe).filter(names).map(n => finding(n, i)))
-  }
 
   private def finding(name: String, init: Init): Finding =
     Finding(s"NoExtendsCapability: do not extend the capability $name; use it with ?=>", init.pos)

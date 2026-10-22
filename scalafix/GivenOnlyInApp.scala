@@ -29,7 +29,8 @@ object GivenOnlyInApp {
     else
       tree.collect {
         case g: Defn.GivenAlias => typeName(g.decltpe).filter(names).map(n => finding(n, g))
-        case g: Defn.Given => g.templ.inits.headOption.flatMap(i => typeName(i.tpe)).filter(names).map(n => finding(n, g))
+        case g: Defn.Given =>
+          g.templ.inits.headOption.flatMap(i => typeName(i.tpe)).filter(names).map(n => finding(n, g))
       }.flatten
 
   private def finding(name: String, g: Tree): Finding =
