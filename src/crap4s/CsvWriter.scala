@@ -12,11 +12,11 @@ object CsvWriter:
   def line(row: UnitRow): String =
     List(
       escape(row.file),
-      row.line.toString,
-      escape(row.unit),
-      row.cc.toString,
-      number(row.cov),
-      number(row.crap)
+      row.line.value.toString,
+      escape(row.unit.value),
+      row.cc.value.toString,
+      number(row.cov.value),
+      number(row.crap.value)
     )
       .mkString(",")
 

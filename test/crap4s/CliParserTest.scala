@@ -23,7 +23,7 @@ class CliParserTest extends FunSuite:
     val (tasty, coverage) = existingDirs("threshold")
     assertEquals(
       CliParser.parse(List("--tasty", tasty, "--coverage", coverage, "--threshold", "6.5")),
-      Right(CliConfig(List(tasty), List(coverage), Nil, 6.5, false))
+      Right(CliConfig(List(tasty), List(coverage), Nil, Threshold.from(6.5).toOption.get, false))
     )
 
   test("parse --all flag"):
@@ -99,4 +99,12 @@ class CliParserTest extends FunSuite:
       Error.BadField(2, "line", "a number", "q").message,
       "Damaged scoverage.coverage: record 2: line is not a number: 'q'"
     )
+  test("a threshold of 0, a negative threshold and NaN are rejected"):
+    val (tasty, coverage) = existingDirs("bad-threshold")
+    List("0", "-2", "NaN").foreach: value =>
+      assertEquals(
+        CliParser.parse(List("--tasty", tasty, "--coverage", coverage, "--threshold", value)),
+        Left(Error.InvalidThreshold(value))
+      )
+
 end CliParserTest

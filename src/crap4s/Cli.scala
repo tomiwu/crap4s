@@ -28,7 +28,7 @@ object Cli:
     for
       tasty <- guard(TastyLoader.load(config.tastyDirs.map(Path.of(_)), entries))
       data <- CoverageLoader.loadAll(config.coverageDirs.map(Path.of(_)), Some(baseDir))
-      rows <- guard(Right(Analyzer.rows(tasty, data, baseDir)))
+      rows <- guard(Analyzer.rows(tasty, data, baseDir))
     yield
       val csv = CsvWriter.render(UnitRow.select(rows, config.threshold, config.all))
       val code = if UnitRow.exceeds(rows, config.threshold) then AboveThresholdCode else 0
