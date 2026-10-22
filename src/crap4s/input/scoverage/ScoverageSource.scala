@@ -7,7 +7,6 @@ import crap4s.pipeline.Coverage
 import java.nio.file.Path
 
 /** Reads the statements from the `-coverage-out` directories of the Scala 3 compiler. */
-/** Builds the capability from path texts. */
 def scoverageAt(dirs: List[String], baseDir: String): Coverage =
   val base = Path.of(baseDir)
   Coverage(() => statements(dirs.map(Path.of(_)), base))

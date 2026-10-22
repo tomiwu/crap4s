@@ -14,7 +14,6 @@ import tastyquery.Exceptions.InvalidProgramStructureException
 import java.nio.file.Path
 
 /** Reads the units from TASTy files. */
-/** Builds the capability from path texts. */
 def tastyUnitsAt(tastyDirs: List[String], classpath: List[String], baseDir: String): Units =
   val base = Path.of(baseDir)
   Units(() => units(tastyDirs.map(Path.of(_)), classpath.map(Path.of(_)), base))
