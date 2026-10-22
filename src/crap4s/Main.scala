@@ -1,11 +1,11 @@
 package crap4s
 
-import crap4s.output.Colour
+import crap4s.output.colourEnabled
 
 import java.nio.file.Path
 
 @main def crap(args: String*): Unit =
-  val color = Colour.enabled(
+  val color = colourEnabled(
     name => Option(System.getenv(name)),
     Option(System.console()).exists(_.isTerminal)
   )

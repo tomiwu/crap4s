@@ -4,6 +4,7 @@ import crap4s.cli.ExitCode
 import crap4s.core.Error
 import crap4s.core.Threshold
 import crap4s.core.UnitRow
+import crap4s.core.anyExceeds
 
 /** The text for stdout and the exit code of a run. */
 final case class Result(out: String, code: ExitCode)
@@ -21,4 +22,4 @@ def pipeline(
   yield Result(text, exitCode(rows, threshold))
 
 private def exitCode(rows: List[UnitRow], threshold: Threshold): ExitCode =
-  if UnitRow.exceeds(rows, threshold) then ExitCode.OverThreshold else ExitCode.Pass
+  if anyExceeds(rows, threshold) then ExitCode.OverThreshold else ExitCode.Pass

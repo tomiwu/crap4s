@@ -10,11 +10,11 @@ class CoverageMergeTest extends FunSuite:
   test("merge keeps statement ids unique and shifts the executed ids"):
     val first = CoverageData(List(statement(0, "A.scala"), statement(1, "A.scala")), Set(1))
     val second = CoverageData(List(statement(0, "B.scala")), Set(0))
-    val merged = CoverageData.merge(List(first, second))
+    val merged = mergeCoverage(List(first, second))
     assertEquals(merged.statements.map(_.id), List(0, 1, 2))
     assertEquals(merged.statements.map(_.sourcePath), List("A.scala", "A.scala", "B.scala"))
     assertEquals(merged.executedIds, Set(1, 2))
 
   test("merge of no parts is empty"):
-    assertEquals(CoverageData.merge(Nil), CoverageData.Empty)
+    assertEquals(mergeCoverage(Nil), emptyCoverage)
 end CoverageMergeTest

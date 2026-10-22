@@ -14,13 +14,13 @@ class CyclomaticComplexityTest extends FunSuite:
     val code =
       Process(Seq("scala-cli", "compile", fixture.toString, "-d", out.toString, "-S", "3.10.0")).!
     assertEquals(code, 0)
-    TastyLoader.load(out).toOption.get
+    loadTasty(out).toOption.get
 
   private lazy val methods: Map[String, LoadedMethod] =
     loaded.methods.map(m => m.name -> m).toMap
 
   private def cc(name: String): Int =
-    CyclomaticComplexity.of(methods(name).body)(using loaded.context)
+    complexityOf(methods(name).body)(using loaded.context)
 
   private val expected = List(
     "plain" -> 1,
@@ -56,7 +56,7 @@ class CyclomaticComplexityTest extends FunSuite:
     loaded.methods.filter(_.name.startsWith(parent + "$"))
 
   private def unitCc(unit: LoadedMethod): Int =
-    CyclomaticComplexity.ofUnit(unit)(using loaded.context)
+    complexityOfUnit(unit)(using loaded.context)
 
   test("top-level lambda with branches is a separate unit"):
     val found = units("nestedLambda")
@@ -88,7 +88,7 @@ class SyntheticCodeTest extends FunSuite:
     val code =
       Process(Seq("scala-cli", "compile", fixture.toString, "-d", out.toString, "-S", "3.10.0")).!
     assertEquals(code, 0)
-    TastyLoader.load(out).toOption.get
+    loadTasty(out).toOption.get
 
   test("only user code is a unit"):
     val names = loaded.methods.map(m => s"${m.owner}.${m.name}").toSet
@@ -100,6 +100,6 @@ class SyntheticCodeTest extends FunSuite:
   test("inline def has its own CC and the call site does not add it"):
     val byName = loaded.methods.map(m => m.name -> m).toMap
     given tastyquery.Contexts.Context = loaded.context
-    assertEquals(CyclomaticComplexity.of(byName("twice").body), 2)
-    assertEquals(CyclomaticComplexity.of(byName("callsTwice").body), 1)
+    assertEquals(complexityOf(byName("twice").body), 2)
+    assertEquals(complexityOf(byName("callsTwice").body), 1)
 end SyntheticCodeTest

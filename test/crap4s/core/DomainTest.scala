@@ -52,12 +52,12 @@ class DomainTest extends FunSuite:
     assertEquals(ValidationError.InvalidComplexity(0).message, "Complexity must be 1 or more: 0")
     assert(ValidationError.BlankUnitName.message.contains("empty"))
 
-  test("Crap.of applies cc² × (1 − cov)³ + cc"):
+  test("crapOf applies cc² × (1 − cov)³ + cc"):
     val score =
       for
         cc <- Complexity.from(2)
         cov <- Coverage.from(0.5)
-      yield Crap.of(cc, cov).value
+      yield crapOf(cc, cov).value
     assertEquals(score, Right(2.5))
 
   test("a raw Int cannot be a Complexity"):
