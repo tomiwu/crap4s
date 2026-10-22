@@ -8,22 +8,21 @@ import crap4s.pipeline.Report
 import java.util.Locale
 
 /** Aligned table for a terminal: all units, worst first. Rows above the threshold are red. */
-final class HumanWriter(color: Boolean) extends Report:
-  import HumanWriter.*
+object HumanWriter:
+  def report(color: Boolean): Report =
+    Report((rows, threshold, _) => render(color, rows, threshold))
 
-  def render(rows: List[UnitRow], threshold: Threshold, all: Boolean): Either[Error, String] =
+  def render(color: Boolean, rows: List[UnitRow], threshold: Threshold): Either[Error, String] =
     val sorted = UnitRow.select(rows, threshold, all = true)
     val cells = Header :: sorted.map(cellsOf)
     val widths = Table.widths(cells)
     val body = cells.zip(false :: sorted.map(_.crap.isAbove(threshold))).map: (row, over) =>
-      paint(Table.format(row, widths), over)
+      paint(color, Table.format(row, widths), over)
     Right((body :+ summary(rows, threshold)).mkString("", "\n", "\n"))
 
-  private def paint(line: String, over: Boolean): String =
+  private def paint(color: Boolean, line: String, over: Boolean): String =
     if color && over then s"$Red$line$Reset" else line
-end HumanWriter
 
-object HumanWriter:
   private val Red = "\u001b[31m"
   private val Reset = "\u001b[0m"
   private val Header = List("file:line", "unit", "cc", "cov", "crap", "")

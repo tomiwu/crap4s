@@ -13,24 +13,26 @@ import tastyquery.Exceptions.InvalidProgramStructureException
 
 import java.nio.file.Path
 
-object TastySource:
-  /** Builds the source from path texts. */
-  def at(tastyDirs: List[String], classpath: List[String], baseDir: String): TastySource =
-    TastySource(tastyDirs.map(Path.of(_)), classpath.map(Path.of(_)), Path.of(baseDir))
-
 /** Reads the units from TASTy files. */
-final class TastySource(tastyDirs: List[Path], classpath: List[Path], baseDir: Path)
-    extends Units:
+object TastySource:
+  /** Builds the capability from path texts. */
+  def at(tastyDirs: List[String], classpath: List[String], baseDir: String): Units =
+    val base = Path.of(baseDir)
+    Units(() => units(tastyDirs.map(Path.of(_)), classpath.map(Path.of(_)), base))
 
-  def units(): Either[Error, List[CodeUnit]] =
-    try TastyLoader.load(tastyDirs, classpath).flatMap(toUnits)
+  private def units(
+      tastyDirs: List[Path],
+      classpath: List[Path],
+      baseDir: Path
+  ): Either[Error, List[CodeUnit]] =
+    try TastyLoader.load(tastyDirs, classpath).flatMap(toUnits(_, baseDir))
     catch case e: InvalidProgramStructureException => Left(Error.UnresolvedSymbol(e.getMessage))
 
-  private def toUnits(tasty: TastyLoadResult): Either[Error, List[CodeUnit]] =
+  private def toUnits(tasty: TastyLoadResult, baseDir: Path): Either[Error, List[CodeUnit]] =
     given Context = tasty.context
-    Eithers.traverse(tasty.methods)(toUnit)
+    Eithers.traverse(tasty.methods)(toUnit(_, baseDir))
 
-  private def toUnit(method: LoadedMethod)(using Context): Either[Error, CodeUnit] =
+  private def toUnit(method: LoadedMethod, baseDir: Path)(using Context): Either[Error, CodeUnit] =
     val position = method.position
     val unit =
       for

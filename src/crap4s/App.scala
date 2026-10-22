@@ -9,9 +9,13 @@ import crap4s.core.Error
 import crap4s.input.InputFiles
 import crap4s.input.scoverage.ScoverageSource
 import crap4s.input.tasty.TastySource
+import crap4s.core.CoverageMapper
+import crap4s.core.UnitRow
 import crap4s.pipeline.Coverage
+import crap4s.pipeline.Mapping
 import crap4s.pipeline.Report
 import crap4s.pipeline.Result
+import crap4s.pipeline.Scoring
 import crap4s.pipeline.Units
 import crap4s.pipeline.pipeline
 
@@ -43,6 +47,8 @@ object App:
     val (entries, missing) = config.classpath.partition(files.exists)
     given Units = TastySource.at(config.tastyDirs, entries, baseDir)
     given Coverage = ScoverageSource.at(config.coverageDirs, baseDir)
+    given Mapping = Mapping(CoverageMapper.map)
+    given Scoring = Scoring(UnitRow.fromStats)
     given Report = Registry.report(config.format, color)
     pipeline(config.threshold, config.all).map(outcome(_, missing))
 

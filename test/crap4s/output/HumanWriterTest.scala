@@ -40,12 +40,12 @@ class HumanWriterTest extends FunSuite:
         |3 units, max CRAP 17.80, 1 over threshold
         |""".stripMargin
     assertEquals(
-      HumanWriter(false).render(rows, Threshold.Default, all = false).toOption.get,
+      HumanWriter.render(false, rows, Threshold.Default).toOption.get,
       expected
     )
 
   test("colour marks only rows above the threshold"):
-    val out = HumanWriter(true).render(rows, Threshold.Default, all = false).toOption.get
+    val out = HumanWriter.render(true, rows, Threshold.Default).toOption.get
     val lines = out.linesIterator.toList
     assert(!lines.head.contains(Esc))
     assert(lines(1).startsWith(s"${Esc}31m") && lines(1).endsWith(s"${Esc}0m"))
@@ -53,17 +53,17 @@ class HumanWriterTest extends FunSuite:
     assert(!lines.last.contains(Esc))
 
   test("no colour code appears when colour is off"):
-    assert(!HumanWriter(false).render(
+    assert(!HumanWriter.render(
+      false,
       rows,
-      Threshold.Default,
-      all = true
+      Threshold.Default
     ).toOption.get.contains(Esc))
 
   test("columns stay aligned with long unit names"):
-    val lines = HumanWriter(false).render(
+    val lines = HumanWriter.render(
+      false,
       rows,
-      Threshold.Default,
-      all = true
+      Threshold.Default
     ).toOption.get.linesIterator.toList
     val table = lines.init
     assertEquals(table.map(_.length).distinct.size, 1)
@@ -71,7 +71,7 @@ class HumanWriterTest extends FunSuite:
 
   test("an empty list gives only the summary"):
     assertEquals(
-      HumanWriter(false).render(Nil, Threshold.Default, all = false).toOption.get,
+      HumanWriter.render(false, Nil, Threshold.Default).toOption.get,
       "file:line  unit  cc  cov  crap\n0 units, max CRAP 0.00, 0 over threshold\n"
     )
 
@@ -84,7 +84,7 @@ class HumanWriterTest extends FunSuite:
         |2 units, max CRAP 2.50, 0 over threshold
         |""".stripMargin
     assertEquals(
-      HumanWriter(false).render(marked, Threshold.Default, all = false).toOption.get,
+      HumanWriter.render(false, marked, Threshold.Default).toOption.get,
       expected
     )
 

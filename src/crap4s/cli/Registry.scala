@@ -8,5 +8,5 @@ import crap4s.pipeline.Report
 object Registry:
   def report(format: Format, color: Boolean = false): Report =
     format match
-      case Format.Agent => AgentWriter
-      case Format.Human => HumanWriter(color)
+      case Format.Agent => AgentWriter.report
+      case Format.Human => HumanWriter.report(color)

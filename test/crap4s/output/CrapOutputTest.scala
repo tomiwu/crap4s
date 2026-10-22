@@ -69,14 +69,14 @@ class CrapOutputTest extends FunSuite:
 
   test("golden: some failing units, worst first, then FAIL summary"):
     assertEquals(
-      AgentWriter.render(failing, threshold(3.0), all = false).toOption.get,
+      AgentWriter.report.run(failing, threshold(3.0), all = false).toOption.get,
       "A.scala:1 b cc=5 cov=0.20 crap=17.80\nA.scala:1 c cc=2 cov=0.00 crap=6.00\n" +
         "FAIL 2/3 max=17.80\n"
     )
 
   test("golden: all units pass gives only the PASS line"):
     assertEquals(
-      AgentWriter.render(
+      AgentWriter.report.run(
         List(row("a", 1, 1.0), row("c", 2, 0.5)),
         threshold(6.0),
         all = false
@@ -86,20 +86,20 @@ class CrapOutputTest extends FunSuite:
 
   test("golden: 0 units"):
     assertEquals(
-      AgentWriter.render(Nil, threshold(6.0), all = false).toOption.get,
+      AgentWriter.report.run(Nil, threshold(6.0), all = false).toOption.get,
       "PASS 0 max=0.00\n"
     )
 
   test("--all lists every unit before the summary"):
     assertEquals(
-      AgentWriter.render(List(row("a", 1, 1.0)), threshold(6.0), all = true).toOption.get,
+      AgentWriter.report.run(List(row("a", 1, 1.0)), threshold(6.0), all = true).toOption.get,
       "A.scala:1 a cc=1 cov=1.00 crap=1.00\nPASS 1 max=1.00\n"
     )
 
   test("golden: a failing unit with no-cov gets the marker at the end of its line"):
     val rows = List(row("a", 5, 0.0).copy(noCov = true), row("b", 5, 0.0))
     assertEquals(
-      AgentWriter.render(rows, threshold(6.0), all = false).toOption.get,
+      AgentWriter.report.run(rows, threshold(6.0), all = false).toOption.get,
       "A.scala:1 a cc=5 cov=0.00 crap=30.00 no-cov\nA.scala:1 b cc=5 cov=0.00 crap=30.00\n" +
         "FAIL 2/2 max=30.00\n"
     )

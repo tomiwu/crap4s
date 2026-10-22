@@ -2,6 +2,7 @@ package crap4s.pipeline
 
 import crap4s.cli.ExitCode
 import crap4s.core.CodeUnit
+import crap4s.core.CoverageMapper
 import crap4s.core.Complexity
 import crap4s.core.Error
 import crap4s.core.SourceLine
@@ -26,25 +27,26 @@ class PipelineTest extends FunSuite:
     valid(Complexity.from(cc))
   )
 
-  private class FakeUnits(result: Either[Error, List[CodeUnit]]) extends Units:
-    def units(): Either[Error, List[CodeUnit]] = result
-
-  private class FakeCoverage(result: Either[Error, List[Statement]]) extends Coverage:
-    def statements(): Either[Error, List[Statement]] = result
-
-  private class FakeReport(result: Either[Error, String] = Right("report")) extends Report:
-    def render(rows: List[UnitRow], threshold: Threshold, all: Boolean): Either[Error, String] =
-      result.map(_ + ":" + rows.map(_.unit.value).mkString(",") + "@" + threshold.value)
-
   private val covered = List(Statement("src/A.scala", 5, 10, true))
+
+  private val realMapping = Mapping(CoverageMapper.map)
+  private val realScoring = Scoring(UnitRow.fromStats)
+
+  private def fakeReport(result: Either[Error, String] = Right("report")): Report =
+    Report: (rows, threshold, _) =>
+      result.map(_ + ":" + rows.map(_.unit.value).mkString(",") + "@" + threshold.value)
 
   private def run(
       units: Either[Error, List[CodeUnit]],
       statements: Either[Error, List[Statement]],
-      report: Report = FakeReport()
+      report: Report = fakeReport(),
+      mapping: Mapping = realMapping,
+      scoring: Scoring = realScoring
   ): Either[Error, Result] =
-    given Units = FakeUnits(units)
-    given Coverage = FakeCoverage(statements)
+    given Units = Units(() => units)
+    given Coverage = Coverage(() => statements)
+    given Mapping = mapping
+    given Scoring = scoring
     given Report = report
     pipeline(Threshold.Default, all = false)
 
@@ -67,5 +69,29 @@ class PipelineTest extends FunSuite:
 
   test("an error from the report fails the pipeline"):
     val error = Error.MissingOption("--x")
-    assertEquals(run(Right(List(unit(1))), Right(covered), FakeReport(Left(error))), Left(error))
+    assertEquals(run(Right(List(unit(1))), Right(covered), fakeReport(Left(error))), Left(error))
+
+  test("the mapping gets the units and the statements"):
+    val seen = List.newBuilder[(Int, Int)]
+    val spy = Mapping: (found, statements) =>
+      seen += ((found.size, statements.size))
+      Nil
+    val _ = run(Right(List(unit(1))), Right(covered), mapping = spy)
+    assertEquals(seen.result(), List((1, 1)))
+
+  test("an error from the scoring fails the pipeline"):
+    val error = Error.MissingOption("--score")
+    val failing = Scoring(_ => Left(error))
+    assertEquals(run(Right(List(unit(1))), Right(covered), scoring = failing), Left(error))
+
+  test("a fake scoring decides the rows and the exit code"):
+    val row = UnitRow(
+      "src/A.scala",
+      valid(SourceLine.from(3)),
+      valid(UnitName.from("A.fake")),
+      valid(Complexity.from(30)),
+      valid(crap4s.core.Coverage.from(0.0))
+    )
+    val result = run(Right(Nil), Right(Nil), scoring = Scoring(_ => Right(List(row))))
+    assertEquals(result, Right(Result("report:A.fake@6.0", ExitCode.OverThreshold)))
 end PipelineTest
