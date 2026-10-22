@@ -1,5 +1,7 @@
 package crap4s.cli
 
+import crap4s.App
+import crap4s.Outcome
 import munit.FunSuite
 
 import java.nio.file.Files
@@ -23,7 +25,10 @@ class EndToEndTest extends FunSuite:
     (classes, coverage)
 
   private def run(extra: String*): Outcome =
-    Cli.run(List("--tasty", dirs._1.toString, "--coverage", dirs._2.toString) ++ extra, base)
+    App.run(
+      List("--tasty", dirs._1.toString, "--coverage", dirs._2.toString) ++ extra,
+      base.toString
+    )
 
   private def expected(name: String): String = Files.readString(project.resolve(name))
 

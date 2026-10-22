@@ -1,17 +1,18 @@
 package crap4s.output
 
-import crap4s.core.ReportWriter
+import crap4s.core.Error
 import crap4s.core.Threshold
 import crap4s.core.UnitRow
+import crap4s.pipeline.Report
 
 import java.util.Locale
 
 /** Few-token output: one line for each reported unit, then one summary line. */
-object AgentWriter extends ReportWriter:
+object AgentWriter extends Report:
 
-  def render(rows: List[UnitRow], threshold: Threshold, all: Boolean): String =
+  def render(rows: List[UnitRow], threshold: Threshold, all: Boolean): Either[Error, String] =
     val lines = UnitRow.select(rows, threshold, all).map(line)
-    (lines :+ summary(rows, threshold)).mkString("", "\n", "\n")
+    Right((lines :+ summary(rows, threshold)).mkString("", "\n", "\n"))
 
   def line(row: UnitRow): String =
     s"${row.file}:${row.line.value} ${row.unit.value} cc=${row.cc.value} " +

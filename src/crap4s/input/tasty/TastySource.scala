@@ -6,16 +6,21 @@ import crap4s.core.Eithers
 import crap4s.core.Error
 import crap4s.core.SourceLine
 import crap4s.core.UnitName
-import crap4s.core.UnitSource
 import crap4s.input.scoverage.SourcePathNormalizer
+import crap4s.pipeline.Units
 import tastyquery.Contexts.Context
 import tastyquery.Exceptions.InvalidProgramStructureException
 
 import java.nio.file.Path
 
+object TastySource:
+  /** Builds the source from path texts. */
+  def at(tastyDirs: List[String], classpath: List[String], baseDir: String): TastySource =
+    TastySource(tastyDirs.map(Path.of(_)), classpath.map(Path.of(_)), Path.of(baseDir))
+
 /** Reads the units from TASTy files. */
 final class TastySource(tastyDirs: List[Path], classpath: List[Path], baseDir: Path)
-    extends UnitSource:
+    extends Units:
 
   def units(): Either[Error, List[CodeUnit]] =
     try TastyLoader.load(tastyDirs, classpath).flatMap(toUnits)

@@ -1,5 +1,7 @@
 package crap4s.cli
 
+import crap4s.App
+import crap4s.Outcome
 import munit.FunSuite
 
 import java.nio.file.Files
@@ -32,30 +34,30 @@ class ClasspathTest extends FunSuite:
   private def units(outcome: Outcome): List[String] = outcome.out.linesIterator.toList.init
 
   test("an app without its dependencies gives an error that tells to add the classpath"):
-    val outcome = Cli.run(appArgs(), base)
+    val outcome = App.run(appArgs(), base.toString)
     assertEquals(outcome.code, ExitCode.Error)
     assert(outcome.err.contains("--classpath"), outcome.err)
     assert(!outcome.err.contains("\tat "), outcome.err)
 
   test("--classpath resolves the dependencies"):
-    val outcome = Cli.run(appArgs("--classpath", lib.classes.toString), base)
+    val outcome = App.run(appArgs("--classpath", lib.classes.toString), base.toString)
     assertEquals(outcome.code, ExitCode.Pass, clue = outcome.err)
     assert(units(outcome).exists(_.contains("extapp.App.total")), outcome.out)
 
   test("--classpath-file resolves the dependencies in the one-line format"):
     val file = Files.writeString(Files.createTempFile("cp", ".txt"), s"${lib.classes}:/no/such\n")
-    val outcome = Cli.run(appArgs("--classpath-file", file.toString), base)
+    val outcome = App.run(appArgs("--classpath-file", file.toString), base.toString)
     assertEquals(outcome.code, ExitCode.Pass, clue = outcome.err)
     assert(units(outcome).exists(_.contains("extapp.App.total")), outcome.out)
 
   test("--classpath-file resolves the dependencies in the one-entry-per-line format"):
     val file = Files.writeString(Files.createTempFile("cp", ".txt"), s"\n${lib.classes}\n\n")
-    val outcome = Cli.run(appArgs("--classpath-file", file.toString), base)
+    val outcome = App.run(appArgs("--classpath-file", file.toString), base.toString)
     assertEquals(outcome.code, ExitCode.Pass, clue = outcome.err)
     assertEquals(outcome.err, "")
 
   test("a classpath entry that does not exist gives a warning and the run continues"):
-    val outcome = Cli.run(appArgs("--classpath", s"/no/such:${lib.classes}"), base)
+    val outcome = App.run(appArgs("--classpath", s"/no/such:${lib.classes}"), base.toString)
     assertEquals(outcome.code, ExitCode.Pass, clue = outcome.err)
     assertEquals(outcome.err, "Warning: classpath entry does not exist: /no/such\n")
 
@@ -71,13 +73,13 @@ class ClasspathTest extends FunSuite:
       app.coverage.toString,
       "--all"
     )
-    val rows = units(Cli.run(args, base))
+    val rows = units(App.run(args, base.toString))
     assert(rows.exists(_.contains("extlib.Base.greet")), rows.toString)
     assert(rows.exists(_.contains("extapp.App.total")), rows.toString)
     assert(rows.forall(!_.contains("cov=1.00")), rows.toString)
 
   test("a missing second coverage directory is an error"):
-    val outcome = Cli.run(appArgs("--coverage", "/no/such"), base)
+    val outcome = App.run(appArgs("--coverage", "/no/such"), base.toString)
     assertEquals(outcome.code, ExitCode.Error)
     assert(outcome.err.contains("/no/such"))
 end ClasspathTest
