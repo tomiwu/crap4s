@@ -1,16 +1,17 @@
 package crap4s
 
 import crap4s.cli.CliConfig
-import crap4s.cli.CliParser
 import crap4s.cli.ExitCode
-import crap4s.cli.Registry
-import crap4s.cli.Usage
-import crap4s.core.CoverageMapper
+import crap4s.cli.parseArgs
+import crap4s.cli.reportFor
+import crap4s.cli.usageText
 import crap4s.core.Error
-import crap4s.core.UnitRow
+import crap4s.core.mapCoverage
+import crap4s.core.rowsFromStats
 import crap4s.input.InputFiles
-import crap4s.input.scoverage.ScoverageSource
-import crap4s.input.tasty.TastySource
+import crap4s.input.fileSystem
+import crap4s.input.scoverage.scoverageAt
+import crap4s.input.tasty.tastyUnitsAt
 import crap4s.pipeline.Coverage
 import crap4s.pipeline.Mapping
 import crap4s.pipeline.Report
@@ -27,12 +28,11 @@ object App:
       args: List[String],
       baseDir: String,
       color: Boolean = false,
-      files: InputFiles = InputFiles
+      files: InputFiles = fileSystem
   ): Outcome =
-    if args.contains("--help") then Outcome(Usage.text, "", ExitCode.Pass)
+    if args.contains("--help") then Outcome(usageText, "", ExitCode.Pass)
     else
-      CliParser
-        .parse(args, files)
+      parseArgs(args, files)
         .flatMap(execute(_, baseDir, color, files))
         .fold(failure, identity)
 
@@ -45,11 +45,11 @@ object App:
       files: InputFiles
   ): Either[Error, Outcome] =
     val (entries, missing) = config.classpath.partition(files.exists)
-    given Units = TastySource.at(config.tastyDirs, entries, baseDir)
-    given Coverage = ScoverageSource.at(config.coverageDirs, baseDir)
-    given Mapping = Mapping(CoverageMapper.map)
-    given Scoring = Scoring(UnitRow.fromStats)
-    given Report = Registry.report(config.format, color)
+    given Units = tastyUnitsAt(config.tastyDirs, entries, baseDir)
+    given Coverage = scoverageAt(config.coverageDirs, baseDir)
+    given Mapping = Mapping(mapCoverage)
+    given Scoring = Scoring(rowsFromStats)
+    given Report = reportFor(config.format, color)
     pipeline(config.threshold, config.all).map(outcome(_, missing))
 
   private def outcome(result: Result, missing: List[String]): Outcome =

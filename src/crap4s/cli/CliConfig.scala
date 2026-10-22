@@ -8,8 +8,5 @@ final case class CliConfig(
     classpath: List[String],
     threshold: Threshold,
     all: Boolean,
-    format: Format = Format.Default
+    format: Format = defaultFormat
 )
-
-object CliConfig:
-  val DefaultThreshold: Threshold = Threshold.Default

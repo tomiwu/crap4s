@@ -47,7 +47,7 @@ FAIL 1/100 max=17.80
 
 ```mermaid
 flowchart LR
-  CLI["cli: CliParser, Registry"] --> APP["App.scala: wires the modules"]
+  CLI["cli: parseArgs, reportFor"] --> APP["App.scala: wires the modules"]
   APP --> PL["pipeline/Pipeline.scala: the flow"]
   PL --> TASTY["input/tasty: Units"]
   PL --> SCOV["input/scoverage: Coverage"]

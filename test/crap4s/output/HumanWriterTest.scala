@@ -40,12 +40,12 @@ class HumanWriterTest extends FunSuite:
         |3 units, max CRAP 17.80, 1 over threshold
         |""".stripMargin
     assertEquals(
-      HumanWriter.render(false, rows, Threshold.Default).toOption.get,
+      renderHuman(false, rows, Threshold.Default).toOption.get,
       expected
     )
 
   test("colour marks only rows above the threshold"):
-    val out = HumanWriter.render(true, rows, Threshold.Default).toOption.get
+    val out = renderHuman(true, rows, Threshold.Default).toOption.get
     val lines = out.linesIterator.toList
     assert(!lines.head.contains(Esc))
     assert(lines(1).startsWith(s"${Esc}31m") && lines(1).endsWith(s"${Esc}0m"))
@@ -53,14 +53,14 @@ class HumanWriterTest extends FunSuite:
     assert(!lines.last.contains(Esc))
 
   test("no colour code appears when colour is off"):
-    assert(!HumanWriter.render(
+    assert(!renderHuman(
       false,
       rows,
       Threshold.Default
     ).toOption.get.contains(Esc))
 
   test("columns stay aligned with long unit names"):
-    val lines = HumanWriter.render(
+    val lines = renderHuman(
       false,
       rows,
       Threshold.Default
@@ -71,7 +71,7 @@ class HumanWriterTest extends FunSuite:
 
   test("an empty list gives only the summary"):
     assertEquals(
-      HumanWriter.render(false, Nil, Threshold.Default).toOption.get,
+      renderHuman(false, Nil, Threshold.Default).toOption.get,
       "file:line  unit  cc  cov  crap\n0 units, max CRAP 0.00, 0 over threshold\n"
     )
 
@@ -84,16 +84,16 @@ class HumanWriterTest extends FunSuite:
         |2 units, max CRAP 2.50, 0 over threshold
         |""".stripMargin
     assertEquals(
-      HumanWriter.render(false, marked, Threshold.Default).toOption.get,
+      renderHuman(false, marked, Threshold.Default).toOption.get,
       expected
     )
 
   test("colour is on for a terminal without NO_COLOR"):
-    assert(Colour.enabled(_ => None, isTerminal = true))
+    assert(colourEnabled(_ => None, isTerminal = true))
 
   test("colour is off with NO_COLOR, even when empty"):
-    assert(!Colour.enabled(name => Option.when(name == "NO_COLOR")(""), isTerminal = true))
+    assert(!colourEnabled(name => Option.when(name == "NO_COLOR")(""), isTerminal = true))
 
   test("colour is off when stdout is not a terminal"):
-    assert(!Colour.enabled(_ => None, isTerminal = false))
+    assert(!colourEnabled(_ => None, isTerminal = false))
 end HumanWriterTest

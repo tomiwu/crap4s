@@ -26,7 +26,7 @@ class TastyLoaderTest extends FunSuite:
     assertEquals(code, 0, clue = s"scala-cli compile failed for $fixtureDir")
 
   private def loadCompiled(outputDir: Path): TastyLoadResult =
-    TastyLoader.load(outputDir) match
+    loadTasty(outputDir) match
       case Left(message) => fail(message.message)
       case Right(result) => result
 
@@ -36,7 +36,7 @@ class TastyLoaderTest extends FunSuite:
     val result = loadCompiled(out)
     val tastyLabel = out.toAbsolutePath.normalize.toString
     assert(result.classpathEntries.contains(tastyLabel))
-    assert(result.classpathEntries.contains(TastyClasspath.JreLabel))
+    assert(result.classpathEntries.contains(JreLabel))
 
   test("lists methods with names, lines, and body trees from compiled fixture"):
     val out = Files.createTempDirectory("crap4s-methods")

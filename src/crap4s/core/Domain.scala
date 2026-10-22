@@ -59,7 +59,7 @@ object UnitName:
 
   extension (name: UnitName) def value: String = name
 
-/** A CRAP score. Only `Crap.of` makes it. */
+/** A CRAP score. Only `crapOf` makes it. */
 opaque type CrapScore = Double
 
 object CrapScore:
@@ -71,6 +71,5 @@ object CrapScore:
     def value: Double = score
     def isAbove(threshold: Threshold): Boolean = score > threshold.value
 
-object Crap:
-  /** CRAP = cc² × (1 − cov)³ + cc. */
-  def of(cc: Complexity, cov: Coverage): CrapScore = CrapScore.calculate(cc, cov)
+/** CRAP = cc² × (1 − cov)³ + cc. */
+def crapOf(cc: Complexity, cov: Coverage): CrapScore = CrapScore.calculate(cc, cov)

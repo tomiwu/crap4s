@@ -3,7 +3,6 @@ package crap4s.pipeline
 import crap4s.cli.ExitCode
 import crap4s.core.CodeUnit
 import crap4s.core.Complexity
-import crap4s.core.CoverageMapper
 import crap4s.core.Error
 import crap4s.core.SourceLine
 import crap4s.core.Statement
@@ -11,6 +10,8 @@ import crap4s.core.Threshold
 import crap4s.core.UnitName
 import crap4s.core.UnitRow
 import crap4s.core.ValidationError
+import crap4s.core.mapCoverage
+import crap4s.core.rowsFromStats
 import munit.FunSuite
 
 class PipelineTest extends FunSuite:
@@ -29,8 +30,8 @@ class PipelineTest extends FunSuite:
 
   private val covered = List(Statement("src/A.scala", 5, 10, true))
 
-  private val realMapping = Mapping(CoverageMapper.map)
-  private val realScoring = Scoring(UnitRow.fromStats)
+  private val realMapping = Mapping(mapCoverage)
+  private val realScoring = Scoring(rowsFromStats)
 
   private def fakeReport(result: Either[Error, String] = Right("report")): Report =
     Report: (rows, threshold, _) =>

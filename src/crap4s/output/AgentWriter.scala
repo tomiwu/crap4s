@@ -3,28 +3,27 @@ package crap4s.output
 import crap4s.core.Error
 import crap4s.core.Threshold
 import crap4s.core.UnitRow
+import crap4s.core.selectRows
 import crap4s.pipeline.Report
 
 import java.util.Locale
 
 /** Few-token output: one line for each reported unit, then one summary line. */
-object AgentWriter:
-  val report: Report = Report(render)
+val agentReport: Report = Report(renderAgent)
 
-  def render(rows: List[UnitRow], threshold: Threshold, all: Boolean): Either[Error, String] =
-    val lines = UnitRow.select(rows, threshold, all).map(line)
-    Right((lines :+ summary(rows, threshold)).mkString("", "\n", "\n"))
+def renderAgent(rows: List[UnitRow], threshold: Threshold, all: Boolean): Either[Error, String] =
+  val lines = selectRows(rows, threshold, all).map(agentLine)
+  Right((lines :+ agentSummary(rows, threshold)).mkString("", "\n", "\n"))
 
-  def line(row: UnitRow): String =
-    s"${row.file}:${row.line.value} ${row.unit.value} cc=${row.cc.value} " +
-      s"cov=${number(row.cov.value)} crap=${number(row.crap.value)}" +
-      (if row.noCov then " no-cov" else "")
+def agentLine(row: UnitRow): String =
+  s"${row.file}:${row.line.value} ${row.unit.value} cc=${row.cc.value} " +
+    s"cov=${agentNumber(row.cov.value)} crap=${agentNumber(row.crap.value)}" +
+    (if row.noCov then " no-cov" else "")
 
-  def summary(rows: List[UnitRow], threshold: Threshold): String =
-    val failing = rows.count(_.crap.isAbove(threshold))
-    val max = number(rows.map(_.crap.value).maxOption.getOrElse(0.0))
-    if failing == 0 then s"PASS ${rows.size} max=$max" else s"FAIL $failing/${rows.size} max=$max"
+def agentSummary(rows: List[UnitRow], threshold: Threshold): String =
+  val failing = rows.count(_.crap.isAbove(threshold))
+  val max = agentNumber(rows.map(_.crap.value).maxOption.getOrElse(0.0))
+  if failing == 0 then s"PASS ${rows.size} max=$max" else s"FAIL $failing/${rows.size} max=$max"
 
-  private def number(value: Double): String =
-    String.format(Locale.ROOT, "%.2f", Double.box(value))
-end AgentWriter
+private def agentNumber(value: Double): String =
+  String.format(Locale.ROOT, "%.2f", Double.box(value))
