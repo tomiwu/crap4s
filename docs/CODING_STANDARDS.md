@@ -8,7 +8,7 @@ Each rule has one reason. Source tags:
 
 ## 1. Design
 
-1. **Keep each concern in its own object or file** (TASTy loading, coverage parsing, complexity, mapping, CRAP formula, CSV output, CLI). [A8] Reason: a change then touches the smallest part of the code.
+1. **Keep each concern in its own object or file** (TASTy loading, coverage parsing, complexity, mapping, CRAP formula, report output, CLI). [A8] Reason: a change then touches the smallest part of the code.
 2. **Compose the pipeline from small steps** in `Main`: read, analyze, map, score, write. [A8] Reason: each step is easy to read and to test alone.
 3. **Model the domain with case classes and enums** (`Unit`, `Coverage`, `Score`), not with raw `String`, `Int` or tuples. [A8] Reason: names in code show the domain, and the compiler finds mix-ups.
 4. **Use a trait only where there are two or more real implementations, or a test double is necessary** (for example, a coverage source). [A8] Reason: abstraction has a cost; do not add it without a need.
