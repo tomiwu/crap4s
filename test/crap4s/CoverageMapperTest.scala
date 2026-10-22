@@ -1,52 +1,51 @@
 package crap4s
 
-import crap4s.coverage.*
-import crap4s.tasty.*
 import munit.FunSuite
-
-import java.nio.file.Path
 
 class CoverageMapperTest extends FunSuite:
 
-  private def unit(name: String, start: Int, end: Int, kind: UnitKind = UnitKind.Method) =
-    LoadedMethod("O", name, MethodPosition("/p/src/A.scala", start, end, 1), None, kind)
+  private def valid[A](result: Either[ValidationError, A]): A =
+    result.fold(e => fail(e.message), identity)
 
-  private def stmt(id: Int, start: Int, end: Int, path: String = "src/A.scala") =
-    CoverageStatement(id, path, start, end, 1, "m", false)
+  private def unit(name: String, start: Int, end: Int, file: String = "src/A.scala") =
+    CodeUnit(
+      file,
+      start,
+      end,
+      valid(SourceLine.from(1)),
+      valid(UnitName.from(name)),
+      valid(Complexity.from(1))
+    )
 
-  private val base = Some(Path.of("/p"))
+  private def stmt(start: Int, end: Int, executed: Boolean, file: String = "src/A.scala") =
+    Statement(file, start, end, executed)
 
-  private def covs(units: List[LoadedMethod], stmts: List[CoverageStatement], run: Set[Int]) =
-    CoverageMapper.map(units, CoverageData(stmts, run), base).map(_.cov)
+  private def covs(units: List[CodeUnit], stmts: List[Statement]): List[Double] =
+    CoverageMapper.map(units, stmts).map(_.cov)
 
-  test("fully covered method is 1.0"):
+  test("fully covered unit is 1.0"):
     assertEquals(
-      covs(List(unit("f", 0, 50)), List(stmt(1, 5, 10), stmt(2, 10, 20)), Set(1, 2)),
+      covs(List(unit("f", 0, 50)), List(stmt(5, 10, true), stmt(10, 20, true))),
       List(1.0)
     )
 
-  test("method that is not called is 0.0"):
-    assertEquals(covs(List(unit("f", 0, 50)), List(stmt(1, 5, 10)), Set.empty), List(0.0))
+  test("unit that is not called is 0.0"):
+    assertEquals(covs(List(unit("f", 0, 50)), List(stmt(5, 10, false))), List(0.0))
 
-  test("partly covered method is between 0 and 1"):
+  test("partly covered unit is between 0 and 1"):
     assertEquals(
-      covs(List(unit("f", 0, 50)), List(stmt(1, 5, 10), stmt(2, 10, 20)), Set(1)),
+      covs(List(unit("f", 0, 50)), List(stmt(5, 10, true), stmt(10, 20, false))),
       List(0.5)
     )
 
-  test("a lambda takes its statements before the parent method"):
-    val units = List(unit("f", 0, 100), unit("lam", 20, 40, UnitKind.Lambda))
-    val result =
-      CoverageMapper.map(units, CoverageData(List(stmt(1, 5, 10), stmt(2, 25, 30)), Set(2)), base)
+  test("a nested unit takes its statements before the parent"):
+    val units = List(unit("f", 0, 100), unit("lam", 20, 40))
+    val result = CoverageMapper.map(units, List(stmt(5, 10, false), stmt(25, 30, true)))
     assertEquals(result.map(r => (r.total, r.executed)), List((1, 0), (1, 1)))
 
-  test("range end is exclusive of later offsets"):
+  test("a statement that ends after the unit is ignored"):
     assertEquals(
-      CoverageMapper.map(
-        List(unit("f", 0, 10)),
-        CoverageData(List(stmt(1, 5, 11)), Set(1)),
-        base
-      ).map(_.total),
+      CoverageMapper.map(List(unit("f", 0, 10)), List(stmt(5, 11, true))).map(_.total),
       List(0)
     )
 
@@ -54,16 +53,12 @@ class CoverageMapperTest extends FunSuite:
     assertEquals(
       CoverageMapper.map(
         List(unit("f", 0, 50)),
-        CoverageData(List(stmt(1, 5, 10, "src/B.scala")), Set(1)),
-        base
+        List(stmt(5, 10, true, "src/B.scala"))
       ).map(_.total),
       List(0)
     )
 
   test("a unit without statements has the default coverage"):
-    assertEquals(
-      covs(List(unit("f", 0, 50)), Nil, Set.empty),
-      List(CoverageMapper.NoStatementsCoverage)
-    )
+    assertEquals(covs(List(unit("f", 0, 50)), Nil), List(CoverageMapper.NoStatementsCoverage))
     assertEquals(CoverageMapper.NoStatementsCoverage, 0.0)
 end CoverageMapperTest

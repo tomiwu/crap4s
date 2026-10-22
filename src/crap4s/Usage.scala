@@ -11,6 +11,7 @@ object Usage:
       |  --classpath-file <file>  File with the dependency classpath.
       |  --threshold <number>     Report units with a CRAP score above this number. Default: 6.
       |  --all                    Report every unit.
+      |  --format <name>          Output format. Known formats: csv. Default: csv.
       |  --help                   Print this text.
       |
       |Exit codes: 0 = no unit above the threshold, 1 = error, 2 = a unit above the threshold.

@@ -1,44 +1,24 @@
 package crap4s
 
-import crap4s.coverage.CoverageData
-import crap4s.coverage.CoverageMapper
-import crap4s.coverage.SourcePathNormalizer
-import crap4s.coverage.UnitCoverage
-import crap4s.tasty.CyclomaticComplexity
-import crap4s.tasty.TastyLoadResult
-
-import java.nio.file.Path
-
 object Analyzer:
-  def rows(
-      tasty: TastyLoadResult,
-      data: CoverageData,
-      baseDir: Path
-  ): Either[Error, List[UnitRow]] =
-    given tastyquery.Contexts.Context = tasty.context
-    val units = CoverageMapper.map(tasty.methods, data, Some(baseDir))
-    units.foldRight(Right(Nil): Either[Error, List[UnitRow]]): (unit, acc) =>
+  def rows(units: UnitSource, coverage: CoverageSource): Either[Error, List[UnitRow]] =
+    for
+      found <- units.units()
+      statements <- coverage.statements()
+      rows <- toRows(CoverageMapper.map(found, statements))
+    yield rows
+
+  private def toRows(stats: List[UnitStats]): Either[Error, List[UnitRow]] =
+    stats.foldRight(Right(Nil): Either[Error, List[UnitRow]]): (stat, acc) =>
       for
         rest <- acc
-        row <- toRow(unit, baseDir)
+        row <- toRow(stat)
       yield row :: rest
 
-  private def toRow(uc: UnitCoverage, baseDir: Path)(using
-      tastyquery.Contexts.Context
-  ): Either[Error, UnitRow] =
-    val unit = uc.unit
-    val row =
-      for
-        line <- SourceLine.from(unit.position.line)
-        name <- UnitName.from(s"${unit.owner}.${unit.name}")
-        cc <- Complexity.from(CyclomaticComplexity.ofUnit(unit))
-        cov <- Coverage.from(uc.cov)
-      yield UnitRow(
-        file = SourcePathNormalizer.normalize(unit.position.sourceFile, Some(baseDir)),
-        line = line,
-        unit = name,
-        cc = cc,
-        cov = cov
-      )
-    row.left.map(Error.InvalidValue(_))
+  private def toRow(stat: UnitStats): Either[Error, UnitRow] =
+    Coverage
+      .from(stat.cov)
+      .map(cov => UnitRow(stat.unit.file, stat.unit.line, stat.unit.name, stat.unit.cc, cov))
+      .left
+      .map(Error.InvalidValue(_))
 end Analyzer

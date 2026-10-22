@@ -2,10 +2,12 @@ package crap4s
 
 import java.util.Locale
 
-object CsvWriter:
+object CsvWriter extends ReportWriter:
   val Header: String = "file,line,unit,cc,cov,crap"
 
   private val Special: Set[Char] = Set(',', '"', '\n', '\r')
+
+  def render(rows: List[UnitRow], threshold: Threshold): String = render(rows)
 
   def render(rows: List[UnitRow]): String = (Header :: rows.map(line)).mkString("", "\n", "\n")
 

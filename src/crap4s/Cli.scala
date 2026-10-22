@@ -1,8 +1,7 @@
 package crap4s
 
-import crap4s.coverage.CoverageLoader
-import crap4s.tasty.TastyLoader
-import tastyquery.Exceptions.InvalidProgramStructureException
+import crap4s.coverage.ScoverageSource
+import crap4s.tasty.TastySource
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -25,16 +24,13 @@ object Cli:
   private def analyze(config: CliConfig, baseDir: Path): Either[Error, Outcome] =
     val (entries, missing) = config.classpath.map(Path.of(_)).partition(Files.exists(_))
     val warnings = missing.map(entry => s"Warning: classpath entry does not exist: $entry\n")
+    val tasty = TastySource(config.tastyDirs.map(Path.of(_)), entries, baseDir)
+    val coverage = ScoverageSource(config.coverageDirs.map(Path.of(_)), baseDir)
     for
-      tasty <- guard(TastyLoader.load(config.tastyDirs.map(Path.of(_)), entries))
-      data <- CoverageLoader.loadAll(config.coverageDirs.map(Path.of(_)), Some(baseDir))
-      rows <- guard(Analyzer.rows(tasty, data, baseDir))
+      writer <- Registry.writer(config.format)
+      rows <- Analyzer.rows(tasty, coverage)
     yield
-      val csv = CsvWriter.render(UnitRow.select(rows, config.threshold, config.all))
+      val text = writer.render(UnitRow.select(rows, config.threshold, config.all), config.threshold)
       val code = if UnitRow.exceeds(rows, config.threshold) then AboveThresholdCode else 0
-      Outcome(csv, warnings.mkString, code)
-
-  private def guard[A](step: => Either[Error, A]): Either[Error, A] =
-    try step
-    catch case e: InvalidProgramStructureException => Left(Error.UnresolvedSymbol(e.getMessage))
+      Outcome(text, warnings.mkString, code)
 end Cli

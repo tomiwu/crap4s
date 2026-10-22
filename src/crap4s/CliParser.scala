@@ -14,11 +14,12 @@ object CliParser:
       coverage: List[String],
       classpath: List[String],
       threshold: Threshold,
-      all: Boolean
+      all: Boolean,
+      format: String
   )
 
   private def readFlags(args: List[String]): Either[Error, Flags] =
-    parseLoop(args, Flags(Nil, Nil, Nil, CliConfig.DefaultThreshold, false))
+    parseLoop(args, Flags(Nil, Nil, Nil, CliConfig.DefaultThreshold, false, Registry.DefaultFormat))
 
   private type Step = Either[Error, (List[String], Flags)]
 
@@ -31,6 +32,7 @@ object CliParser:
       ((flags, value) =>
         readClasspathFile(value).map(entries => flags.copy(classpath = flags.classpath ++ entries))
       ),
+    "--format" -> ((flags, value) => Registry.writer(value).map(_ => flags.copy(format = value))),
     "--threshold" ->
       ((flags, value) =>
         parseThreshold(value).map(threshold => flags.copy(threshold = threshold))
@@ -74,7 +76,7 @@ object CliParser:
       tasty <- required("--tasty", flags.tasty)
       coverage <- required("--coverage", flags.coverage)
       _ <- requireDirectories(tasty ++ coverage)
-    yield CliConfig(tasty, coverage, flags.classpath, flags.threshold, flags.all)
+    yield CliConfig(tasty, coverage, flags.classpath, flags.threshold, flags.all, flags.format)
 
   private def requireDirectories(paths: List[String]): Either[Error, Unit] =
     paths.find(path => !Files.isDirectory(Path.of(path))) match
