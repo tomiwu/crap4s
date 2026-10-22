@@ -57,6 +57,16 @@ class HumanWriterTest extends FunSuite:
       "file:line  unit  cc  cov  crap\n0 units, max CRAP 0.00, 0 over threshold\n"
     )
 
+  test("golden table with a no-cov marker keeps the columns aligned"):
+    val marked = List(rows(2).copy(noCov = true), rows(0))
+    val expected =
+      """file:line       unit  cc   cov  crap
+        |src/B.scala:10  B.g    2   50%  2.50  no-cov
+        |src/A.scala:3   A.f    1  100%  1.00
+        |2 units, max CRAP 2.50, 0 over threshold
+        |""".stripMargin
+    assertEquals(HumanWriter(false).render(marked, Threshold.Default, all = false), expected)
+
   test("colour is on for a terminal without NO_COLOR"):
     assert(Colour.enabled(_ => None, isTerminal = true))
 

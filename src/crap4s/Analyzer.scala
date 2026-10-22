@@ -18,7 +18,9 @@ object Analyzer:
   private def toRow(stat: UnitStats): Either[Error, UnitRow] =
     Coverage
       .from(stat.cov)
-      .map(cov => UnitRow(stat.unit.file, stat.unit.line, stat.unit.name, stat.unit.cc, cov))
+      .map(cov =>
+        UnitRow(stat.unit.file, stat.unit.line, stat.unit.name, stat.unit.cc, cov, stat.noCov)
+      )
       .left
       .map(Error.InvalidValue(_))
 end Analyzer

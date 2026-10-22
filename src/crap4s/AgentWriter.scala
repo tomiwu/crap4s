@@ -11,7 +11,8 @@ object AgentWriter extends ReportWriter:
 
   def line(row: UnitRow): String =
     s"${row.file}:${row.line.value} ${row.unit.value} cc=${row.cc.value} " +
-      s"cov=${number(row.cov.value)} crap=${number(row.crap.value)}"
+      s"cov=${number(row.cov.value)} crap=${number(row.crap.value)}" +
+      (if row.noCov then " no-cov" else "")
 
   def summary(rows: List[UnitRow], threshold: Threshold): String =
     val failing = rows.count(_.crap.isAbove(threshold))
