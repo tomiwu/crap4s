@@ -13,7 +13,7 @@
 //> using options -unchecked
 
 //> using dep ch.epfl.scala::tasty-query:1.10.0
-//> using exclude samples/** test/fixtures/** testdata/**
+//> using exclude samples/** scalafix/** test/fixtures/** testdata/**
 
 // Test
 //> using test.dep org.scalameta::munit:1.3.6

@@ -63,13 +63,11 @@ object UnitName:
 opaque type CrapScore = Double
 
 object CrapScore:
-  private[core] def calculate(cc: Complexity, cov: Coverage): CrapScore =
-    val ccD = cc.value.toDouble
-    ccD * ccD * math.pow(1.0 - cov.value, 3) + ccD
-
   extension (score: CrapScore)
     def value: Double = score
     def isAbove(threshold: Threshold): Boolean = score > threshold.value
 
 /** CRAP = cc² × (1 − cov)³ + cc. */
-def crapOf(cc: Complexity, cov: Coverage): CrapScore = CrapScore.calculate(cc, cov)
+def crapOf(cc: Complexity, cov: Coverage): CrapScore =
+  val ccD = cc.toDouble
+  ccD * ccD * math.pow(1.0 - cov, 3) + ccD
