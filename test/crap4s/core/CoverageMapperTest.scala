@@ -17,35 +17,44 @@ class CoverageMapperTest extends FunSuite:
       valid(Complexity.from(1))
     )
 
-  private def stmt(start: Int, end: Int, executed: Boolean, file: String = "src/A.scala") =
-    Statement(file, start, end, executed)
-
   private def covs(units: List[CodeUnit], stmts: List[Statement]): List[Double] =
     mapCoverage(units, stmts).map(_.cov)
 
   test("fully covered unit is 1.0"):
     assertEquals(
-      covs(List(unit("f", 0, 50)), List(stmt(5, 10, true), stmt(10, 20, true))),
+      covs(
+        List(unit("f", 0, 50)),
+        List(Statement("src/A.scala", 5, 10, true), Statement("src/A.scala", 10, 20, true))
+      ),
       List(1.0)
     )
 
   test("unit that is not called is 0.0"):
-    assertEquals(covs(List(unit("f", 0, 50)), List(stmt(5, 10, false))), List(0.0))
+    assertEquals(
+      covs(List(unit("f", 0, 50)), List(Statement("src/A.scala", 5, 10, false))),
+      List(0.0)
+    )
 
   test("partly covered unit is between 0 and 1"):
     assertEquals(
-      covs(List(unit("f", 0, 50)), List(stmt(5, 10, true), stmt(10, 20, false))),
+      covs(
+        List(unit("f", 0, 50)),
+        List(Statement("src/A.scala", 5, 10, true), Statement("src/A.scala", 10, 20, false))
+      ),
       List(0.5)
     )
 
   test("a nested unit takes its statements before the parent"):
     val units = List(unit("f", 0, 100), unit("lam", 20, 40))
-    val result = mapCoverage(units, List(stmt(5, 10, false), stmt(25, 30, true)))
+    val result = mapCoverage(
+      units,
+      List(Statement("src/A.scala", 5, 10, false), Statement("src/A.scala", 25, 30, true))
+    )
     assertEquals(result.map(r => (r.total, r.executed)), List((1, 0), (1, 1)))
 
   test("a statement that ends after the unit is ignored"):
     assertEquals(
-      mapCoverage(List(unit("f", 0, 10)), List(stmt(5, 11, true))).map(_.total),
+      mapCoverage(List(unit("f", 0, 10)), List(Statement("src/A.scala", 5, 11, true))).map(_.total),
       List(0)
     )
 
@@ -53,7 +62,7 @@ class CoverageMapperTest extends FunSuite:
     assertEquals(
       mapCoverage(
         List(unit("f", 0, 50)),
-        List(stmt(5, 10, true, "src/B.scala"))
+        List(Statement("src/B.scala", 5, 10, true))
       ).map(_.total),
       List(0)
     )
@@ -73,7 +82,8 @@ class CoverageMapperTest extends FunSuite:
     )
 
   test("a unit with statements and none executed has coverage 0.0 and no flag"):
-    val stats = mapCoverage(List(unit("f", 0, 50)), List(stmt(5, 10, false))).head
+    val stats =
+      mapCoverage(List(unit("f", 0, 50)), List(Statement("src/A.scala", 5, 10, false))).head
     assertEquals(stats.cov, 0.0)
     assert(!stats.noCov)
 end CoverageMapperTest

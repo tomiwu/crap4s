@@ -34,12 +34,12 @@ Each rule has one reason. Source tags:
       def apply(f: () => Either[Error, List[CodeUnit]]): Units = f
     def mapping(using m: Mapping): Mapping = m
 
-    // Pipeline.scala: the flow is one via chain and asks for the modules with ?=>
+    // Pipeline.scala: the flow is one flatMap chain and asks for the modules with ?=>
     def pipeline: (Units, Coverage, Mapping, Scoring, Report) ?=> Either[Error, Result] =
       Inputs.load
-        .via(mapping)
-        .via(scoring)
-        .via(report)
+        .flatMap(mapping)
+        .flatMap(scoring)
+        .flatMap(report)
 
     // App.scala: the only place that picks the implementations
     given Units = tastyUnitsAt(config.tastyDirs, entries, baseDir)
@@ -111,6 +111,8 @@ OrganizeImports {
 ```
 
 Note: `RemoveUnused` and `OrganizeImports.removeUnused` need `-Wunused:all`.
+
+The local rule `PassThrough` (`scalafix/PassThrough.scala`, enabled in `.scalafix.conf`) flags a `def` whose body only calls another function with its own parameters or constants. Inline such a def. The rule skips overrides, defs in a type with parents, a companion `apply` and defs with `@nowarn("crap4s:passthrough")`. The `lint` job fails on 1 or more findings. Scalafix local rules are Scala 2.13 code, so `scalafix/` is its own Scala CLI project with its own tests (`scala-cli test scalafix`). The main build excludes it, and scalafmt skips it.
 
 ### 4.3 WartRemover (optional)
 

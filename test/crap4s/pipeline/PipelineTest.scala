@@ -53,20 +53,6 @@ class PipelineTest extends FunSuite:
     given Report = report
     pipeline
 
-  test("via passes the value of a Right to the stage"):
-    val right: Either[Error, Int] = Right(2)
-    assertEquals(right.via(n => Right(n * 3)), Right(6))
-
-  test("via keeps a Left and skips the stage"):
-    val error = Error.MissingOption("--x")
-    val left: Either[Error, Int] = Left(error)
-    var called = false
-    val result = left.via: n =>
-      called = true
-      Right(n)
-    assertEquals(result, Left(error))
-    assert(!called)
-
   test("a covered simple unit passes"):
     assertEquals(
       run(Right(List(unit(1))), Right(covered)),
