@@ -155,11 +155,7 @@ Note: `RemoveUnused` and `OrganizeImports.removeUnused` need `-Wunused:all`.
 
 Rules 16 to 19 describe the local rules. The local rule `PassThrough` (`scalafix/PassThrough.scala`, enabled in `.scalafix.conf`) flags a `def` whose body only calls another function with its own parameters or constants. Inline such a def. The rule skips overrides, defs in a type with parents, a companion `apply` and defs with `@nowarn("crap4s:passthrough")`. The `lint` job fails on 1 or more findings. Scalafix local rules are Scala 2.13 code, so `scalafix/` is its own Scala CLI project with its own tests (`scala-cli test scalafix`). The main build excludes it, and scalafmt skips it.
 
-Three more local rules guard the capability style. They are in `scalafix/` and use the names in `CapabilityStyle` in `.scalafix.conf`.
-
-- `NoExtendsCapability`: no class, object or enum case extends a capability.
-- `CapabilityObject`: no `object` holds only defs. The companion of an opaque type and `App` are allowed.
-- `GivenOnlyInApp`: a `given` of a capability is only in `App.scala`. Test sources are allowed.
+Three more local rules guard the capability style (`NoExtendsCapability`, `CapabilityObject`, `GivenOnlyInApp`). They are in `scalafix/` and use the names in `CapabilityStyle` in `.scalafix.conf`.
 
 When you add a capability, add its name to `CapabilityStyle`.
 
