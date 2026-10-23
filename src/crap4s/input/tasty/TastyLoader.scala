@@ -4,9 +4,9 @@ import crap4s.core.Error
 import crap4s.core.attempt
 import crap4s.core.describe
 import tastyquery.Contexts.Context
+import tastyquery.Exceptions.InvalidProgramStructureException
 import tastyquery.Symbols.ClassSymbol
 import tastyquery.Symbols.TermOrTypeSymbol
-import tastyquery.Exceptions.InvalidProgramStructureException
 import tastyquery.jdk.ClasspathLoaders
 
 import java.nio.file.Path

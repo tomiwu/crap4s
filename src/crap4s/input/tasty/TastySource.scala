@@ -3,9 +3,9 @@ package crap4s.input.tasty
 import crap4s.core.CodeUnit
 import crap4s.core.Complexity
 import crap4s.core.Error
-import crap4s.core.attempt
 import crap4s.core.SourceLine
 import crap4s.core.UnitName
+import crap4s.core.attempt
 import crap4s.core.traverse
 import crap4s.input.scoverage.normalizePath
 import crap4s.pipeline.Units

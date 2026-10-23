@@ -31,7 +31,9 @@ class TastyClasspathTest extends FunSuite:
 
   test("asJar gives ClasspathSetupFailed for a missing file") {
     val missing = Files.createTempDirectory("crap4s-missing").resolve("absent")
-    assert(asJar(missing).left.exists(_.isInstanceOf[Error.ClasspathSetupFailed]))
+    asJar(missing) match
+      case Left(_: Error.ClasspathSetupFailed) => ()
+      case other => fail(s"unexpected: $other")
   }
 
   test("tastyUnitsAt gives BadPath for an invalid path") {
@@ -46,7 +48,11 @@ class TastyClasspathTest extends FunSuite:
     Files.writeString(jar, "not a jar")
     val fromDir = tastyUnitsAt(List(dir.toString), Nil, ".")()
     val fromJar = tastyUnitsAt(List(dir.toString), List(jar.toString), ".")()
-    assert(fromDir.left.exists(_.isInstanceOf[Error.TastyLoadFailed]), clue = fromDir)
-    assert(fromJar.left.exists(_.isInstanceOf[Error.TastyLoadFailed]), clue = fromJar)
+    fromDir match
+      case Left(_: Error.TastyLoadFailed) => ()
+      case other => fail(s"unexpected: $other")
+    fromJar match
+      case Left(_: Error.TastyLoadFailed) => ()
+      case other => fail(s"unexpected: $other")
   }
 end TastyClasspathTest
