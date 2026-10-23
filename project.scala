@@ -1,6 +1,7 @@
 // Main
 //> using scala 3.10.0
 //> using jvm 25
+//> using option -release:17
 
 //> using options -Wconf:any:verbose
 //> using options -Werror
