@@ -45,4 +45,5 @@ for unit in extension countLines; do
     fail=1
   fi
 done
+"$root/scripts/bad-inputs.sh" "$artifact" "$work/classes" "$work/coverage" || fail=1
 exit "$fail"

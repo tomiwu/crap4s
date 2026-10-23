@@ -60,7 +60,7 @@ class CliTest extends FunSuite:
     val error = Error.InvalidValue(ValidationError.InvalidCoverage(2.0))
     assertEquals(
       App.failure(error),
-      Outcome("", "Coverage must be from 0.0 to 1.0: 2.0\n", ExitCode.Error)
+      Outcome("", "crap4s: Coverage must be from 0.0 to 1.0: 2.0\n", ExitCode.Error)
     )
 
   test("a missing directory gives code 2 and nothing on stdout"):

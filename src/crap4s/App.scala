@@ -52,7 +52,7 @@ object App:
         .flatMap(execute(_, baseDir, color, files, env.property("java.class.path").getOrElse("")))
         .fold(failure, identity)
 
-  def failure(error: Error): Outcome = Outcome("", error.message + "\n", ExitCode.Error)
+  def failure(error: Error): Outcome = Outcome("", s"crap4s: ${error.message}\n", ExitCode.Error)
 
   private def execute(
       config: CliConfig,
