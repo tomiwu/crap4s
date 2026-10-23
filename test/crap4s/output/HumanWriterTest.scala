@@ -40,12 +40,12 @@ class HumanWriterTest extends FunSuite:
         |3 units, max CRAP 17.80, 1 over threshold
         |""".stripMargin
     assertEquals(
-      renderHuman(false, rows, Threshold.Default),
+      renderHuman(false, rows, Threshold.Default).toOption.get,
       expected
     )
 
   test("colour marks only rows above the threshold"):
-    val out = renderHuman(true, rows, Threshold.Default)
+    val out = renderHuman(true, rows, Threshold.Default).toOption.get
     val lines = out.linesIterator.toList
     assert(!lines.head.contains(Esc))
     assert(lines(1).startsWith(s"${Esc}31m") && lines(1).endsWith(s"${Esc}0m"))
@@ -57,21 +57,21 @@ class HumanWriterTest extends FunSuite:
       false,
       rows,
       Threshold.Default
-    ).contains(Esc))
+    ).toOption.get.contains(Esc))
 
   test("columns stay aligned with long unit names"):
     val lines = renderHuman(
       false,
       rows,
       Threshold.Default
-    ).linesIterator.toList
+    ).toOption.get.linesIterator.toList
     val table = lines.init
     assertEquals(table.map(_.length).distinct.size, 1)
     assertEquals(table.map(_.indexOf("cc")).filter(_ >= 0).size, 1)
 
   test("an empty list gives only the summary"):
     assertEquals(
-      renderHuman(false, Nil, Threshold.Default),
+      renderHuman(false, Nil, Threshold.Default).toOption.get,
       "file:line  unit  cc  cov  crap\n0 units, max CRAP 0.00, 0 over threshold\n"
     )
 
@@ -84,7 +84,7 @@ class HumanWriterTest extends FunSuite:
         |2 units, max CRAP 2.50, 0 over threshold
         |""".stripMargin
     assertEquals(
-      renderHuman(false, marked, Threshold.Default),
+      renderHuman(false, marked, Threshold.Default).toOption.get,
       expected
     )
 

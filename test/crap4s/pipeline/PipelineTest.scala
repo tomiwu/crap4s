@@ -30,11 +30,11 @@ class PipelineTest extends FunSuite:
 
   private val covered = List(Statement("src/A.scala", 5, 10, true))
 
-  private val realMapping: Mapping = Stage.total(i => Mapped(mapCoverage(i.units, i.statements)))
-  private val realScoring: Scoring = Stage(m => rowsFromStats(m.stats).map(Scored(_)))
+  private val realMapping = Mapping(i => Right(Mapped(mapCoverage(i.units, i.statements))))
+  private val realScoring = Scoring(m => rowsFromStats(m.stats).map(Scored(_)))
 
   private def fakeReport(result: Either[Error, String] = Right("report")): Report =
-    Stage: scored =>
+    Report: scored =>
       result.map: text =>
         val names = scored.rows.map(_.unit.value).mkString(",")
         resultOf(scored, Threshold.Default, text + ":" + names + "@" + Threshold.Default.value)
@@ -76,7 +76,7 @@ class PipelineTest extends FunSuite:
 
   test("the mapping gets the units and the statements"):
     val seen = List.newBuilder[(Int, Int)]
-    val spy: Mapping = Stage: inputs =>
+    val spy = Mapping: inputs =>
       seen += ((inputs.units.size, inputs.statements.size))
       Right(Mapped(Nil))
     val _ = run(Right(List(unit(1))), Right(covered), mapping = spy)
@@ -84,7 +84,7 @@ class PipelineTest extends FunSuite:
 
   test("an error from the scoring fails the pipeline"):
     val error = Error.MissingOption("--score")
-    val failing: Scoring = Stage(_ => Left(error))
+    val failing = Scoring(_ => Left(error))
     assertEquals(run(Right(List(unit(1))), Right(covered), scoring = failing), Left(error))
 
   test("a fake scoring decides the rows and the exit code"):
@@ -95,6 +95,6 @@ class PipelineTest extends FunSuite:
       valid(Complexity.from(30)),
       valid(crap4s.core.Coverage.from(0.0))
     )
-    val result = run(Right(Nil), Right(Nil), scoring = Stage(_ => Right(Scored(List(row)))))
+    val result = run(Right(Nil), Right(Nil), scoring = Scoring(_ => Right(Scored(List(row)))))
     assertEquals(result, Right(Result("report:A.fake@6.0", ExitCode.OverThreshold)))
 end PipelineTest
