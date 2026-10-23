@@ -14,22 +14,28 @@ import tastyquery.Contexts.Context
 import java.nio.file.Path
 
 /** Reads the units from TASTy files. */
-def tastyUnitsAt(tastyDirs: List[String], classpath: List[String], baseDir: String): Units =
+def tastyUnitsAt(
+    tastyDirs: List[String],
+    classpath: List[String],
+    baseDir: String,
+    javaClassPath: String
+): Units =
   Units(() =>
     for
       base <- parsePath(baseDir)
       dirs <- traverse(tastyDirs)(parsePath)
       entries <- traverse(classpath)(parsePath)
-      units <- units(dirs, entries, base)
+      units <- units(dirs, entries, base, javaClassPath)
     yield units
   )
 
 private def units(
     tastyDirs: List[Path],
     classpath: List[Path],
-    baseDir: Path
+    baseDir: Path,
+    javaClassPath: String
 ): Either[Error, List[CodeUnit]] =
-  loadTasty(tastyDirs, classpath).flatMap(tasty =>
+  loadTasty(tastyDirs, classpath, javaClassPath).flatMap(tasty =>
     attempt(toUnits(tasty, baseDir))(tastyError).flatten
   )
 

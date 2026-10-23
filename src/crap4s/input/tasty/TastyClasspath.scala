@@ -51,10 +51,9 @@ private def copyToTempJar(path: Path): Path =
  * Jars on the JVM class path of crap4s. They give the types of the Scala library and of crap4s
  * itself.
  */
-def runtimeJars(tastyDirs: List[Path]): Either[Error, List[Path]] =
+def runtimeJars(tastyDirs: List[Path], javaClassPath: String): Either[Error, List[Path]] =
   traverse(
-    System
-      .getProperty("java.class.path", "")
+    javaClassPath
       .split(java.io.File.pathSeparator)
       .toList
       .filter(_.endsWith(".jar"))
@@ -62,10 +61,14 @@ def runtimeJars(tastyDirs: List[Path]): Either[Error, List[Path]] =
     .map(_.map(normalizedTastyDir).filterNot(tastyDirs.map(normalizedTastyDir).contains))
 
 /** The TASTy roots come first. Then come the JRE, the Scala library and the extra entries. */
-def classpathPaths(tastyDirs: List[Path], extra: List[Path]): Either[Error, List[Path]] =
+def classpathPaths(
+    tastyDirs: List[Path],
+    extra: List[Path],
+    javaClassPath: String
+): Either[Error, List[Path]] =
   for
     jre <- jreModulePath
     library <- scalaLibraryPath
-    jars <- runtimeJars(tastyDirs)
+    jars <- runtimeJars(tastyDirs, javaClassPath)
   yield (tastyDirs.map(normalizedTastyDir) ++ List(jre, library) ++ jars ++
     extra.map(normalizedTastyDir)).distinct

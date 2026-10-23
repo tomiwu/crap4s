@@ -12,10 +12,14 @@ import tastyquery.jdk.ClasspathLoaders
 import java.nio.file.Path
 
 def loadTasty(tastyDir: Path): Either[Error, TastyLoadResult] =
-  loadTasty(List(tastyDir), Nil)
+  loadTasty(List(tastyDir), Nil, "")
 
-def loadTasty(tastyDirs: List[Path], extra: List[Path]): Either[Error, TastyLoadResult] =
-  classpathPaths(tastyDirs, extra).flatMap: paths =>
+def loadTasty(
+    tastyDirs: List[Path],
+    extra: List[Path],
+    javaClassPath: String
+): Either[Error, TastyLoadResult] =
+  classpathPaths(tastyDirs, extra, javaClassPath).flatMap: paths =>
     attempt(readTasty(tastyDirs, paths))(tastyError)
 
 /** Maps an exception of tasty-query to a typed error. */

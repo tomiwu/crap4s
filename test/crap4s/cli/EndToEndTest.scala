@@ -2,6 +2,7 @@ package crap4s.cli
 
 import crap4s.App
 import crap4s.Outcome
+import crap4s.given
 import munit.FunSuite
 
 import java.nio.file.Files

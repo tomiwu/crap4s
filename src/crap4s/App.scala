@@ -12,6 +12,7 @@ import crap4s.input.InputFiles
 import crap4s.input.fileSystem
 import crap4s.input.scoverage.scoverageAt
 import crap4s.input.tasty.tastyUnitsAt
+import crap4s.output.colourEnabled
 import crap4s.pipeline.Coverage
 import crap4s.pipeline.Inputs
 import crap4s.pipeline.Mapped
@@ -27,16 +28,27 @@ final case class Outcome(out: String, err: String, code: ExitCode)
 
 /** Wires the modules from the parsed config. */
 object App:
+  /** Runs the tool, writes the result to the terminal and gives the exit code. */
+  def main(args: List[String])(using terminal: Terminal, env: Env): Int =
+    guarded(exec(args))
+
+  private def exec(args: List[String])(using terminal: Terminal, env: Env): Int =
+    val color = colourEnabled(env.variable, terminal.isTty())
+    val outcome = run(args, env.workingDir(), color)
+    terminal.out(outcome.out)
+    terminal.err(outcome.err)
+    outcome.code.value
+
   def run(
       args: List[String],
       baseDir: String,
       color: Boolean = false,
       files: InputFiles = fileSystem
-  ): Outcome =
+  )(using env: Env): Outcome =
     if args.contains("--help") then Outcome(usageText, "", ExitCode.Pass)
     else
       parseArgs(args, files)
-        .flatMap(execute(_, baseDir, color, files))
+        .flatMap(execute(_, baseDir, color, files, env.property("java.class.path").getOrElse("")))
         .fold(failure, identity)
 
   def failure(error: Error): Outcome = Outcome("", error.message + "\n", ExitCode.Error)
@@ -45,10 +57,11 @@ object App:
       config: CliConfig,
       baseDir: String,
       color: Boolean,
-      files: InputFiles
+      files: InputFiles,
+      javaClassPath: String
   ): Either[Error, Outcome] =
     val (entries, missing) = config.classpath.partition(files.exists)
-    given Units = tastyUnitsAt(config.tastyDirs, entries, baseDir)
+    given Units = tastyUnitsAt(config.tastyDirs, entries, baseDir, javaClassPath)
     given Coverage = scoverageAt(config.coverageDirs, baseDir)
     given Mapping = Mapping(mapInputs)
     given Scoring = Scoring(scoreStats)
