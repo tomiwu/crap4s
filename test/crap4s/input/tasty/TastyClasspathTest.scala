@@ -37,7 +37,7 @@ class TastyClasspathTest extends FunSuite:
   }
 
   test("tastyUnitsAt gives BadPath for an invalid path") {
-    val units = tastyUnitsAt(List("a\u0000b"), Nil, ".")
+    val units = tastyUnitsAt(List("a\u0000b"), Nil, ".", "")
     assertEquals(units(), Left(Error.BadPath("a\u0000b")))
   }
 
@@ -46,8 +46,8 @@ class TastyClasspathTest extends FunSuite:
     Files.writeString(dir.resolve("Bad.tasty"), "not tasty")
     val jar = Files.createTempFile("crap4s-bad-", ".jar")
     Files.writeString(jar, "not a jar")
-    val fromDir = tastyUnitsAt(List(dir.toString), Nil, ".")()
-    val fromJar = tastyUnitsAt(List(dir.toString), List(jar.toString), ".")()
+    val fromDir = tastyUnitsAt(List(dir.toString), Nil, ".", "")()
+    val fromJar = tastyUnitsAt(List(dir.toString), List(jar.toString), ".", "")()
     fromDir match
       case Left(_: Error.TastyLoadFailed) => ()
       case other => fail(s"unexpected: $other")

@@ -4,6 +4,7 @@ import crap4s.App
 import crap4s.Outcome
 import crap4s.core.Error
 import crap4s.core.ValidationError
+import crap4s.given
 import munit.FunSuite
 
 import java.nio.file.Files
