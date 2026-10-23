@@ -5,26 +5,33 @@ import crap4s.core.Complexity
 import crap4s.core.Error
 import crap4s.core.SourceLine
 import crap4s.core.UnitName
+import crap4s.core.attempt
 import crap4s.core.traverse
 import crap4s.input.scoverage.normalizePath
 import crap4s.pipeline.Units
 import tastyquery.Contexts.Context
-import tastyquery.Exceptions.InvalidProgramStructureException
 
 import java.nio.file.Path
 
 /** Reads the units from TASTy files. */
 def tastyUnitsAt(tastyDirs: List[String], classpath: List[String], baseDir: String): Units =
-  val base = Path.of(baseDir)
-  Units(() => units(tastyDirs.map(Path.of(_)), classpath.map(Path.of(_)), base))
+  Units(() =>
+    for
+      base <- parsePath(baseDir)
+      dirs <- traverse(tastyDirs)(parsePath)
+      entries <- traverse(classpath)(parsePath)
+      units <- units(dirs, entries, base)
+    yield units
+  )
 
 private def units(
     tastyDirs: List[Path],
     classpath: List[Path],
     baseDir: Path
 ): Either[Error, List[CodeUnit]] =
-  try loadTasty(tastyDirs, classpath).flatMap(toUnits(_, baseDir))
-  catch case e: InvalidProgramStructureException => Left(Error.UnresolvedSymbol(e.getMessage))
+  loadTasty(tastyDirs, classpath).flatMap(tasty =>
+    attempt(toUnits(tasty, baseDir))(tastyError).flatten
+  )
 
 private def toUnits(tasty: TastyLoadResult, baseDir: Path): Either[Error, List[CodeUnit]] =
   given Context = tasty.context
