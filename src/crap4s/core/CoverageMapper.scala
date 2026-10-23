@@ -3,7 +3,7 @@ package crap4s.core
 final case class UnitStats(unit: CodeUnit, total: Int, executed: Int):
   /** Executed share of the statements. A unit without statements has `NoStatementsCoverage`. */
   def cov: Double =
-    if noCov then noStatementsCoverage else executed.toDouble / total
+    if noCov then noStatementsCoverage else 1.0 * executed / total
 
   /** True when the report has no statements for the unit. The output marks it `no-cov`. */
   def noCov: Boolean = total == 0
