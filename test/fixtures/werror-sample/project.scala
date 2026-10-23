@@ -9,4 +9,5 @@
 //> using options -Wvalue-discard
 //> using options -deprecation
 //> using options -feature
+//> using options -release:17
 //> using options -unchecked

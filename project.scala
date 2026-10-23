@@ -1,7 +1,6 @@
 // Main
 //> using scala 3.10.0
 //> using jvm 25
-//> using option -release:17
 
 //> using options -Wconf:any:verbose
 //> using options -Werror
@@ -11,6 +10,7 @@
 //> using options -Wvalue-discard
 //> using options -deprecation
 //> using options -feature
+//> using options -release:17
 //> using options -unchecked
 
 //> using dep ch.epfl.scala::tasty-query:1.10.0
