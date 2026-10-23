@@ -2,6 +2,7 @@ package crap4s.cli
 
 import crap4s.core.Error
 import crap4s.core.Threshold
+import crap4s.core.traverse
 import crap4s.input.InputFiles
 import crap4s.input.fileSystem
 
@@ -86,6 +87,7 @@ private def toConfig(flags: Flags, files: InputFiles): Either[Error, CliConfig] 
   yield CliConfig(tasty, coverage, flags.classpath, flags.threshold, flags.all, flags.format)
 
 private def requireDirectories(paths: List[String], files: InputFiles): Either[Error, Unit] =
-  paths.find(path => !files.isDirectory(path)) match
-    case Some(path) => Left(Error.MissingDirectory(path))
-    case None => Right(())
+  traverse(paths)(path => files.isDirectory(path).map(path -> _)).flatMap:
+    _.find(!_._2) match
+      case Some((path, _)) => Left(Error.MissingDirectory(path))
+      case None => Right(())
