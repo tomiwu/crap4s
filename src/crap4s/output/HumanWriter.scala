@@ -1,26 +1,26 @@
 package crap4s.output
 
-import crap4s.core.Error
 import crap4s.core.Threshold
 import crap4s.core.UnitRow
 import crap4s.core.selectRows
 import crap4s.pipeline.Report
+import crap4s.pipeline.Stage
 import crap4s.pipeline.resultOf
 
 import java.util.Locale
 
 /** Aligned table for a terminal: all units, worst first. Rows above the threshold are red. */
 def humanReport(color: Boolean, threshold: Threshold): Report =
-  Report: scored =>
-    renderHuman(color, scored.rows, threshold).map(resultOf(scored, threshold, _))
+  Stage.total: scored =>
+    resultOf(scored, threshold, renderHuman(color, scored.rows, threshold))
 
-def renderHuman(color: Boolean, rows: List[UnitRow], threshold: Threshold): Either[Error, String] =
+def renderHuman(color: Boolean, rows: List[UnitRow], threshold: Threshold): String =
   val sorted = selectRows(rows, threshold, all = true)
   val cells = Header :: sorted.map(cellsOf)
   val widths = tableWidths(cells)
   val body = cells.zip(false :: sorted.map(_.crap.isAbove(threshold))).map: (row, over) =>
     paint(color, formatRow(row, widths), over)
-  Right((body :+ humanSummary(rows, threshold)).mkString("", "\n", "\n"))
+  (body :+ humanSummary(rows, threshold)).mkString("", "\n", "\n")
 
 private def paint(color: Boolean, line: String, over: Boolean): String =
   if color && over then s"$Red$line$Reset" else line

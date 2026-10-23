@@ -14,7 +14,7 @@ class RegistryTest extends FunSuite:
   test("the registry builds the human writer"):
     val human = reportFor(Format.Human, Threshold.Default, all = false, color = true)
     val expected = renderHuman(true, Nil, Threshold.Default)
-    assertEquals(human(Scored(Nil)).map(_.out), expected)
+    assertEquals(human(Scored(Nil)).map(_.out), Right(expected))
 
   test("the agent format is the default"):
     assertEquals(defaultFormat, Format.Agent)
