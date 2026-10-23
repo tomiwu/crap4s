@@ -29,4 +29,8 @@ enum Error(val message: String):
   ) extends Error(s"Damaged scoverage.coverage: record $number: $field is not $expected: '$value'")
   case BadMeasurement(name: String, line: Int, text: String)
       extends Error(s"Damaged $name: line $line is not a statement id: '$text'")
+  case BadPath(value: String) extends Error(s"Invalid path: $value")
+  case ClasspathSetupFailed(reason: String)
+      extends Error(s"Cannot set up the class path: $reason")
+  case TastyLoadFailed(reason: String) extends Error(s"Cannot load TASTy files: $reason")
 end Error
