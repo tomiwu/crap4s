@@ -32,6 +32,11 @@ Each rule has one reason. Source tags:
     opaque type Units <: () => Either[Error, List[CodeUnit]] = () => Either[Error, List[CodeUnit]]
     object Units:
       def apply(f: () => Either[Error, List[CodeUnit]]): Units = f
+    opaque type Stage[A, B] <: (A => Either[Error, B]) = A => Either[Error, B]
+    object Stage:
+      def apply[A, B](f: A => Either[Error, B]): Stage[A, B] = f
+      def total[A, B](f: A => B): Stage[A, B] = f.andThen(Right(_))
+    type Mapping = Stage[Inputs, Mapped]
     def mapping(using m: Mapping): Mapping = m
 
     // Pipeline.scala: the flow is one flatMap chain and asks for the modules with ?=>
@@ -105,6 +110,17 @@ Each rule has one reason. Source tags:
 22. **Keep one last-resort guard, in `Main` only.** `Main` catches an exception that no one expected. It prints one line, it prints no stack trace, and it exits with code 2. No other code has this guard. [S3] Reason: the exit code is the same for every failure, and the user sees no stack trace.
 
 23. **Do not hide a violation.** Do not add a file to the allow lists in `.scalafix.conf` to pass the `lint` job. Change the code. Add a file to a list only when it is a real edge or a real wrapper. [S3] Reason: a long allow list removes the protection of the rules.
+
+24. **Make stages with `Stage.total` or `Stage(...)`.** Do not write a def that only wraps a value in `Right`. Use `Stage.total` for a function that cannot fail. Use `Stage(...)` for a function that can fail. [S3] Reason: the smart constructor adds the `Right`, so a wrapper def is not necessary.
+
+    ```scala
+    // Good
+    given Mapping = Stage.total(in => Mapped(mapCoverage(in.units, in.statements)))
+
+    // Bad
+    private def mapInputs(in: Inputs): Either[Error, Mapped] =
+      Right(Mapped(mapCoverage(in.units, in.statements)))
+    ```
 
 ## 3. Formatting (scalafmt)
 

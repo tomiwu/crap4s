@@ -1,22 +1,22 @@
 package crap4s.output
 
-import crap4s.core.Error
 import crap4s.core.Threshold
 import crap4s.core.UnitRow
 import crap4s.core.selectRows
 import crap4s.pipeline.Report
+import crap4s.pipeline.Stage
 import crap4s.pipeline.resultOf
 
 import java.util.Locale
 
 /** Few-token output: one line for each reported unit, then one summary line. */
 def agentReport(threshold: Threshold, all: Boolean): Report =
-  Report: scored =>
-    renderAgent(scored.rows, threshold, all).map(resultOf(scored, threshold, _))
+  Stage.total: scored =>
+    resultOf(scored, threshold, renderAgent(scored.rows, threshold, all))
 
-def renderAgent(rows: List[UnitRow], threshold: Threshold, all: Boolean): Either[Error, String] =
+def renderAgent(rows: List[UnitRow], threshold: Threshold, all: Boolean): String =
   val lines = selectRows(rows, threshold, all).map(agentLine)
-  Right((lines :+ agentSummary(rows, threshold)).mkString("", "\n", "\n"))
+  (lines :+ agentSummary(rows, threshold)).mkString("", "\n", "\n")
 
 def agentLine(row: UnitRow): String =
   s"${row.file}:${row.line.value} ${row.unit.value} cc=${row.cc.value} " +

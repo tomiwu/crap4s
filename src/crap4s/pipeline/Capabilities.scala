@@ -48,23 +48,21 @@ opaque type Coverage <: () => Either[Error, List[Statement]] =
 object Coverage:
   def apply(f: () => Either[Error, List[Statement]]): Coverage = f
 
-/** Capability: assigns the coverage statements to the units. */
-opaque type Mapping <: Inputs => Either[Error, Mapped] = Inputs => Either[Error, Mapped]
+/** A pipeline step from A to B that can fail. Make it with `Stage.total` or `Stage(...)`. */
+opaque type Stage[A, B] <: (A => Either[Error, B]) = A => Either[Error, B]
 
-object Mapping:
-  def apply(f: Inputs => Either[Error, Mapped]): Mapping = f
+object Stage:
+  def apply[A, B](f: A => Either[Error, B]): Stage[A, B] = f
+  def total[A, B](f: A => B): Stage[A, B] = f.andThen(Right(_))
+
+/** Capability: assigns the coverage statements to the units. */
+type Mapping = Stage[Inputs, Mapped]
 
 /** Capability: computes the CRAP rows from the unit statistics. */
-opaque type Scoring <: Mapped => Either[Error, Scored] = Mapped => Either[Error, Scored]
-
-object Scoring:
-  def apply(f: Mapped => Either[Error, Scored]): Scoring = f
+type Scoring = Stage[Mapped, Scored]
 
 /** Capability: renders the scored units as text and decides the exit code. */
-opaque type Report <: Scored => Either[Error, Result] = Scored => Either[Error, Result]
-
-object Report:
-  def apply(f: Scored => Either[Error, Result]): Report = f
+type Report = Stage[Scored, Result]
 
 def units(using u: Units): Units = u
 def coverage(using c: Coverage): Coverage = c

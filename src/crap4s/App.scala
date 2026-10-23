@@ -15,13 +15,13 @@ import crap4s.input.splitExisting
 import crap4s.input.tasty.tastyUnitsAt
 import crap4s.output.colourEnabled
 import crap4s.pipeline.Coverage
-import crap4s.pipeline.Inputs
 import crap4s.pipeline.Mapped
 import crap4s.pipeline.Mapping
 import crap4s.pipeline.Report
 import crap4s.pipeline.Result
 import crap4s.pipeline.Scored
 import crap4s.pipeline.Scoring
+import crap4s.pipeline.Stage
 import crap4s.pipeline.Units
 import crap4s.pipeline.pipeline
 
@@ -64,13 +64,10 @@ object App:
     splitExisting(config.classpath, files).flatMap: (entries, missing) =>
       given Units = tastyUnitsAt(config.tastyDirs, entries, baseDir, javaClassPath)
       given Coverage = scoverageAt(config.coverageDirs, baseDir)
-      given Mapping = Mapping(mapInputs)
-      given Scoring = Scoring(scoreStats)
+      given Mapping = Stage.total(in => Mapped(mapCoverage(in.units, in.statements)))
+      given Scoring = Stage(scoreStats)
       given Report = reportFor(config.format, config.threshold, config.all, color)
       pipeline.map(outcome(_, missing))
-
-  private def mapInputs(inputs: Inputs): Either[Error, Mapped] =
-    Right(Mapped(mapCoverage(inputs.units, inputs.statements)))
 
   private def scoreStats(mapped: Mapped): Either[Error, Scored] =
     rowsFromStats(mapped.stats).map(Scored(_))
