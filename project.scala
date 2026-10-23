@@ -10,6 +10,7 @@
 //> using options -Wvalue-discard
 //> using options -deprecation
 //> using options -feature
+//> using options -release:17
 //> using options -unchecked
 
 //> using dep ch.epfl.scala::tasty-query:1.10.0

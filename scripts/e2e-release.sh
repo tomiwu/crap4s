@@ -14,6 +14,12 @@ if [ -z "$artifact" ]; then
   "$root/scripts/package.sh" "$artifact"
 fi
 
+# The release artifact must run on the oldest supported Java (17).
+if [ -n "${JAVA17_HOME:-}" ]; then
+  PATH="$JAVA17_HOME/bin:$PATH" "$artifact" --help >/dev/null
+  echo "The artifact runs on Java 17."
+fi
+
 sample="$work/sample"
 cp -r "$root/samples/with-dependency" "$sample"
 cd "$sample"
