@@ -13,7 +13,7 @@ Each rule has one reason. Source tags:
 3. **Model the domain with case classes and enums** (`Unit`, `Coverage`, `Score`), not with raw `String`, `Int` or tuples. [A8] Reason: names in code show the domain, and the compiler finds mix-ups.
 4. **Use a trait only where there are two or more real implementations, or a test double is necessary** (for example, a coverage source). [A8] Reason: abstraction has a cost; do not add it without a need.
 5. **Inject dependencies through constructor or function parameters.** Do not use a DI framework. [A8] Reason: plain parameters are enough and keep tests simple.
-6. **Keep side effects at the edges.** Only the CLI layer reads files, prints, and calls `sys.exit`. Core logic is pure functions. [A8] Reason: pure code is predictable and needs no files to test.
+6. **Keep side effects at the edges.** Only capability implementations at the edge read files, print, read the environment, and exit. Core and pipeline are pure functions (see rule 21). [A8] Reason: pure code is predictable and needs no files to test.
 7. **Write a unit test for each business rule** (each complexity rule, each formula case) without file system access where possible. [A8] Reason: small tests find the exact failure.
 
 ## 2. Scala 3 code
@@ -22,7 +22,7 @@ Each rule has one reason. Source tags:
 9. **Use braceless (indentation) syntax** and `end` markers only for definitions longer than 20 lines. [S3] Reason: same style everywhere; scalafmt enforces it.
 10. **Give an explicit result type to every public or top-level definition.** [S3] Reason: stable API and faster, clearer compiler errors.
 11. **Do not use `null`, `return`, `var` in core logic, or `asInstanceOf`.** If a Java API can return `null`, wrap it in `Option(...)` at once. [S3] Reason: these break the pure, type-safe core.
-12. **Report errors as values** (`Either[Error, A]` with an `enum Error`). Throw only in the CLI layer, and only to exit. [S3] Reason: errors stay visible in types.
+12. **Report errors as values** (`Either[Error, A]` with an `enum Error`). No exception may escape (see rule 20). [S3] Reason: errors stay visible in types.
 13. **Use immutable collections and `Vector`/`List`.** [S3] Reason: no shared mutable state.
 14. **Keep the CRAP score of every unit below 4**: small methods, few branches, high coverage. [crap4s project rule] Reason: the tool must pass its own gate.
 15. **Write modules as capabilities (opaque function types) and use them with `?=>`.** Wire them only in `App.scala`. Put the flow only in `Pipeline.scala`. Only `Main` and the input adapters touch files or the console. [S3] Reason: the flow has no wiring and no side effects, so a test can give it fake modules.
@@ -87,6 +87,24 @@ Each rule has one reason. Source tags:
     // Bad: in Pipeline.scala
     given Units = () => Right(Nil)
     ```
+
+20. **No exception may escape (`NoThrow`, `NoUncheckedTry`, `NoUnsafeCall`).** Every failure is a typed `Error` case in an `Either`. Do not write `throw`. Do not write `try` outside the allowed files. Wrap each call that can throw with the helpers in `Eithers.scala` or `Effects.scala`. Do not use `.get`, `.head`, `.last`, `.tail`, `.reduce`, `.toInt`, `.toDouble`, `require`, `assert` or `???`. Use `Option`, `headOption`, `toIntOption` and pattern matching. [S3] Reason: a failure is then a value, and the type shows it.
+
+    ```scala
+    // Good
+    Eithers.catching(Error.Unreadable(path))(Files.readString(path))
+    text.toIntOption.toRight(Error.BadNumber(text))
+
+    // Bad
+    Files.readString(path)
+    text.toInt
+    ```
+
+21. **Do side effects only at the edge (`SideEffectsAtEdge`).** Exit, print, console, environment, `java.io`, `Files`, `FileSystems`, `var` and `scala.collection.mutable` are allowed only in the edge files (see section 4.2). Core and pipeline are pure. The edge gives these effects as capabilities (`Terminal`, `Env`, and others). [S3] Reason: pure code needs no files and no console to test.
+
+22. **Keep one last-resort guard, in `Main` only.** `Main` catches an exception that no one expected. It prints one line, it prints no stack trace, and it exits with code 2. No other code has this guard. [S3] Reason: the exit code is the same for every failure, and the user sees no stack trace.
+
+23. **Do not hide a violation.** Do not add a file to the allow lists in `.scalafix.conf` to pass the `lint` job. Change the code. Add a file to a list only when it is a real edge or a real wrapper. [S3] Reason: a long allow list removes the protection of the rules.
 
 ## 3. Formatting (scalafmt)
 
@@ -158,6 +176,11 @@ Rules 16 to 19 describe the local rules. The local rule `PassThrough` (`scalafix
 Three more local rules guard the capability style (`NoExtendsCapability`, `CapabilityObject`, `GivenOnlyInApp`). They are in `scalafix/` and use the names in `CapabilityStyle` in `.scalafix.conf`.
 
 Four more local rules guard errors and side effects: `NoThrow`, `NoUncheckedTry`, `NoUnsafeCall` and `SideEffectsAtEdge`. They check only files under `src/`. `NoThrow` flags `throw`. `NoUncheckedTry` flags `try` outside the files in `UncheckedTryFiles`, and flags a `catch` that does not return `Left(...)` outside the files in `UncheckedTryGuards`. `NoUnsafeCall` flags `.get` without arguments, `.head`, `.last`, `.tail`, `.reduce`, `.toInt`, `.toDouble`, `require`, `assert` and `???`. `SideEffectsAtEdge` flags exit, print, console, environment, `java.io`, `Files`, `FileSystems`, `var` and `scala.collection.mutable` outside the path parts in `SideEffectsAllow`. All lists are in `.scalafix.conf`.
+
+The allowed edge files in `.scalafix.conf` are:
+- `UncheckedTryFiles`: `crap4s/core/Eithers.scala`, `crap4s/Effects.scala`. These files may use `try`.
+- `UncheckedTryGuards`: `crap4s/Effects.scala`. A `catch` outside this file must return `Left(...)`.
+- `SideEffectsAllow`: `crap4s/edge/`, `crap4s/input/`, `crap4s/Main.scala`. Only these paths may do IO.
 
 When you add a capability, add its name to `CapabilityStyle`.
 
