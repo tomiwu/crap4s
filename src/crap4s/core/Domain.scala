@@ -69,5 +69,5 @@ object CrapScore:
 
 /** CRAP = cc² × (1 − cov)³ + cc. */
 def crapOf(cc: Complexity, cov: Coverage): CrapScore =
-  val ccD = cc.toDouble
+  val ccD = 1.0 * cc
   ccD * ccD * math.pow(1.0 - cov, 3) + ccD

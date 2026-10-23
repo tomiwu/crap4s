@@ -157,6 +157,8 @@ Rules 16 to 19 describe the local rules. The local rule `PassThrough` (`scalafix
 
 Three more local rules guard the capability style (`NoExtendsCapability`, `CapabilityObject`, `GivenOnlyInApp`). They are in `scalafix/` and use the names in `CapabilityStyle` in `.scalafix.conf`.
 
+Four more local rules guard errors and side effects: `NoThrow`, `NoUncheckedTry`, `NoUnsafeCall` and `SideEffectsAtEdge`. They check only files under `src/`. `NoThrow` flags `throw`. `NoUncheckedTry` flags `try` outside the files in `UncheckedTryFiles`, and flags a `catch` that does not return `Left(...)` outside the files in `UncheckedTryGuards`. `NoUnsafeCall` flags `.get` without arguments, `.head`, `.last`, `.tail`, `.reduce`, `.toInt`, `.toDouble`, `require`, `assert` and `???`. `SideEffectsAtEdge` flags exit, print, console, environment, `java.io`, `Files`, `FileSystems`, `var` and `scala.collection.mutable` outside the path parts in `SideEffectsAllow`. All lists are in `.scalafix.conf`.
+
 When you add a capability, add its name to `CapabilityStyle`.
 
 ### 4.3 WartRemover (optional)
