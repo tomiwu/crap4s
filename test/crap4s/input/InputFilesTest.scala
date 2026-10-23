@@ -10,7 +10,9 @@ class InputFilesTest extends FunSuite:
     val bad = "bad\u0000path"
     assertEquals(fileSystem.isDirectory(bad), Left(Error.BadPath(bad)))
     assertEquals(fileSystem.exists(bad), Left(Error.BadPath(bad)))
-    assert(fileSystem.readString(bad).left.exists(_.isInstanceOf[Error.CannotRead]))
+    assert(fileSystem.readString(bad) match
+      case Left(_: Error.CannotRead) => true;
+      case _ => false)
 
   test("a directory and a missing path give Right"):
     val dir = Files.createTempDirectory("crap4s-files").toString
@@ -19,7 +21,9 @@ class InputFilesTest extends FunSuite:
 
   test("an unreadable file gives CannotRead"):
     val dir = Files.createTempDirectory("crap4s-files").toString
-    assert(fileSystem.readString(dir).left.exists(_.isInstanceOf[Error.CannotRead]))
+    assert(fileSystem.readString(dir) match
+      case Left(_: Error.CannotRead) => true;
+      case _ => false)
 
   test("splitExisting separates the missing entries"):
     val dir = Files.createTempDirectory("crap4s-files").toString

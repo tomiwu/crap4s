@@ -10,8 +10,8 @@ import crap4s.core.mapCoverage
 import crap4s.core.rowsFromStats
 import crap4s.input.InputFiles
 import crap4s.input.fileSystem
-import crap4s.input.splitExisting
 import crap4s.input.scoverage.scoverageAt
+import crap4s.input.splitExisting
 import crap4s.input.tasty.tastyUnitsAt
 import crap4s.output.colourEnabled
 import crap4s.pipeline.Coverage

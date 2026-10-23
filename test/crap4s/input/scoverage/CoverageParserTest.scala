@@ -83,11 +83,15 @@ class CoverageParserTest extends FunSuite:
   test("an unreadable file gives CannotRead"):
     val dir = Files.createTempDirectory("crap4s-cov-dir")
     Files.createDirectory(dir.resolve("scoverage.coverage"))
-    assert(loadCoverage(dir).left.exists(_.isInstanceOf[Error.CannotRead]))
+    assert(loadCoverage(dir) match
+      case Left(_: Error.CannotRead) => true;
+      case _ => false)
 
   test("a file in place of the directory gives CannotList"):
     val file = Files.createTempFile("crap4s-cov", ".txt")
-    assert(measurementFiles(file).left.exists(_.isInstanceOf[Error.CannotList]))
+    assert(measurementFiles(file) match
+      case Left(_: Error.CannotList) => true;
+      case _ => false)
 
   test("scoverageAt gives BadPath for an invalid directory"):
     val result = scoverageAt(List("bad\u0000dir"), ".").apply()
