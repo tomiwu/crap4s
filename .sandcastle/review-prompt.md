@@ -31,6 +31,8 @@ Review the code changes on branch `{{BRANCH}}` and improve code clarity, consist
    - Are there unsafe casts, `asInstanceOf`, `null`, `Any`, or unchecked assumptions?
    - Does the change introduce injection vulnerabilities, credential leaks, or other security issues?
 
+   - **Reject the change** if it adds `throw`, an unwrapped `try`, `.get`, `.head`, `.last`, `.tail`, `.reduce`, `.toInt`, `.toDouble`, `require`, `assert` or `???`, or if it does IO (exit, print, console, env, files, `var`, mutable collections) outside the edge files in `.scalafix.conf`. Also reject a new entry in `UncheckedTryFiles`, `UncheckedTryGuards` or `SideEffectsAllow` without a real edge reason, and a last-resort guard outside `Main`. Every failure must be a typed `Error` case in `Either`. Fix the violation, or write the reason in the commit message.
+
 4. **Maintain balance**: Avoid over-simplification that could:
    - Reduce code clarity or maintainability
    - Create overly clever solutions that are hard to understand
@@ -46,6 +48,7 @@ Review the code changes on branch `{{BRANCH}}` and improve code clarity, consist
 
 # RULES
 
+- No exception may escape. Side effects only at the edge. Only `Main` has a last-resort guard (exit 2, one line, no stack trace).
 - Every unit must have a CRAP score less than 4. Make methods small and well tested.
 - Do not push. Do not open a PR. Do not close the issue.
 - Do not edit `docs/PRD.md` or `.sandcastle/`.

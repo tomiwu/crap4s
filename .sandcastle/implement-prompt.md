@@ -28,6 +28,10 @@ Implement issue #{{ISSUE}} on branch `{{BRANCH}}`. Do only this issue.
 - Do not edit `docs/PRD.md` or `.sandcastle/`.
 - You can edit `.github/workflows/ci.yml`. Keep the job id `test`. Branch protection requires the check `test`. Branch protection also requires `format`, `lint` and `crap`. Do not rename or remove these jobs. The `test` job runs the tests. The `crap` job runs `scripts/self-crap.sh`. You can add new jobs.
 - In `ci.yml`, do not skip a step when a file is missing. The tests always run. `scripts/self-crap.sh` always runs, and the job fails if the script is missing.
+- No exception may escape. Every failure is a typed `Error` case in `Either`. Do not write `throw`, an unwrapped `try`, `.get`, `.head`, `.last`, `.tail`, `.reduce`, `.toInt`, `.toDouble`, `require`, `assert` or `???`.
+- Do side effects (exit, print, console, env, files, `var`, mutable collections) only in capability implementations at the edge. The allowed files are in `.scalafix.conf`. Core and pipeline are pure.
+- Only `Main` has a last-resort guard (exit 2, one line, no stack trace).
+- The Scalafix rules `NoThrow`, `NoUncheckedTry`, `NoUnsafeCall` and `SideEffectsAtEdge` check these rules. Run `scala-cli --power fix --check .`. Do not add a file to the allow lists to pass the check.
 - Do not leave commented-out code or TODO comments.
 - crap4s checks its own code. Every unit (method or top-level lambda) must have a CRAP score less than 4. Keep methods small and tested.
 - The self-check script name is `scripts/self-crap.sh`. If an issue uses another name (for example `self-check.sh`), use `scripts/self-crap.sh`.
