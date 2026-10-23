@@ -7,7 +7,7 @@ import java.nio.file.Path
 @main def crap(args: String*): Unit =
   val color = colourEnabled(
     name => Option(System.getenv(name)),
-    System.console() != null
+    Option(System.console()).isDefined
   )
   val outcome = App.run(args.toList, Path.of("").toAbsolutePath.toString, color)
   print(outcome.out)
