@@ -49,15 +49,16 @@ private def methodToUnit(method: LoadedMethod, baseDir: Path)(using
   val position = method.position
   val unit =
     for
-      line <- SourceLine.from(position.line)
-      name <- UnitName.from(s"${method.owner}.${method.name}")
-      cc <- Complexity.from(complexityOfUnit(method))
+      file <- normalizePath(position.sourceFile, Some(baseDir))
+      line <- SourceLine.from(position.line).left.map(Error.InvalidValue(_))
+      name <- UnitName.from(s"${method.owner}.${method.name}").left.map(Error.InvalidValue(_))
+      cc <- Complexity.from(complexityOfUnit(method)).left.map(Error.InvalidValue(_))
     yield CodeUnit(
-      file = normalizePath(position.sourceFile, Some(baseDir)),
+      file = file,
       startOffset = position.startOffset,
       endOffset = position.endOffset,
       line = line,
       name = name,
       cc = cc
     )
-  unit.left.map(Error.InvalidValue(_))
+  unit

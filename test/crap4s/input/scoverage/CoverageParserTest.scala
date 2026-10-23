@@ -1,5 +1,6 @@
 package crap4s.input.scoverage
 
+import crap4s.core.Error
 import munit.FunSuite
 
 import java.nio.file.Files
@@ -49,10 +50,11 @@ class CoverageParserTest extends FunSuite:
 
   test("normalizes paths against the base directory"):
     val base = Path.of("/proj")
-    assertEquals(normalizePath("/proj/src/A.scala", Some(base)), "src/A.scala")
-    assertEquals(normalizePath("./src/../src/A.scala", None), "src/A.scala")
-    assertEquals(normalizePath("src\\A.scala", Some(base)), "src/A.scala")
-    assertEquals(normalizePath("/other/A.scala", Some(base)), "/other/A.scala")
+    assertEquals(normalizePath("/proj/src/A.scala", Some(base)), Right("src/A.scala"))
+    assertEquals(normalizePath("./src/../src/A.scala", None), Right("src/A.scala"))
+    assertEquals(normalizePath("src\\A.scala", Some(base)), Right("src/A.scala"))
+    assertEquals(normalizePath("/other/A.scala", Some(base)), Right("/other/A.scala"))
+    assertEquals(normalizePath("a\u0000b", None), Left(Error.BadPath("a\u0000b")))
 
   test("damaged reports give errors"):
     assert(parseCoverageReport("nonsense").isLeft)
@@ -73,6 +75,23 @@ class CoverageParserTest extends FunSuite:
     Files.writeString(dir.resolve("scoverage.measurements.1"), "oops\n")
     assert(loadCoverage(dir).left.exists(_.message.contains("scoverage.measurements.1")))
     assert(loadCoverage(dir.resolve("nope")).isLeft)
+
+  test("an empty directory gives Left"):
+    val dir = Files.createTempDirectory("crap4s-cov-empty")
+    assert(loadCoverage(dir).isLeft)
+
+  test("an unreadable file gives CannotRead"):
+    val dir = Files.createTempDirectory("crap4s-cov-dir")
+    Files.createDirectory(dir.resolve("scoverage.coverage"))
+    assert(loadCoverage(dir).left.exists(_.isInstanceOf[Error.CannotRead]))
+
+  test("a file in place of the directory gives CannotList"):
+    val file = Files.createTempFile("crap4s-cov", ".txt")
+    assert(measurementFiles(file).left.exists(_.isInstanceOf[Error.CannotList]))
+
+  test("scoverageAt gives BadPath for an invalid directory"):
+    val result = scoverageAt(List("bad\u0000dir"), ".").apply()
+    assertEquals(result, Left(Error.BadPath("bad\u0000dir")))
 
   test("loads a real report from the compiler"):
     val out = Files.createTempDirectory("crap4s-cov-out")

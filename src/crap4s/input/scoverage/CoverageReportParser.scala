@@ -71,9 +71,10 @@ private def toStatement(
     end <- int(record(8), "end offset", number)
     line <- int(record(9), "line", number)
     branch <- bool(record(12), "is branch", number)
+    path <- normalizePath(record(1), baseDir)
   yield CoverageStatement(
     id,
-    normalizePath(record(1), baseDir),
+    path,
     start,
     end,
     line,

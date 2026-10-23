@@ -10,6 +10,7 @@ import crap4s.core.mapCoverage
 import crap4s.core.rowsFromStats
 import crap4s.input.InputFiles
 import crap4s.input.fileSystem
+import crap4s.input.splitExisting
 import crap4s.input.scoverage.scoverageAt
 import crap4s.input.tasty.tastyUnitsAt
 import crap4s.output.colourEnabled
@@ -60,13 +61,13 @@ object App:
       files: InputFiles,
       javaClassPath: String
   ): Either[Error, Outcome] =
-    val (entries, missing) = config.classpath.partition(files.exists)
-    given Units = tastyUnitsAt(config.tastyDirs, entries, baseDir, javaClassPath)
-    given Coverage = scoverageAt(config.coverageDirs, baseDir)
-    given Mapping = Mapping(mapInputs)
-    given Scoring = Scoring(scoreStats)
-    given Report = reportFor(config.format, config.threshold, config.all, color)
-    pipeline.map(outcome(_, missing))
+    splitExisting(config.classpath, files).flatMap: (entries, missing) =>
+      given Units = tastyUnitsAt(config.tastyDirs, entries, baseDir, javaClassPath)
+      given Coverage = scoverageAt(config.coverageDirs, baseDir)
+      given Mapping = Mapping(mapInputs)
+      given Scoring = Scoring(scoreStats)
+      given Report = reportFor(config.format, config.threshold, config.all, color)
+      pipeline.map(outcome(_, missing))
 
   private def mapInputs(inputs: Inputs): Either[Error, Mapped] =
     Right(Mapped(mapCoverage(inputs.units, inputs.statements)))
