@@ -12,13 +12,6 @@ import crap4s.core.anyExceeds
 /** The input of the mapping stage: the units and the coverage statements. */
 final case class Inputs(units: List[CodeUnit], statements: List[Statement])
 
-/** Loads the units and the coverage statements. */
-def loadInputs(using u: Units, c: Coverage): Either[Error, Inputs] =
-  for
-    found <- u()
-    statements <- c()
-  yield Inputs(found, statements)
-
 /** The output of the mapping stage: the statistics of each unit. */
 final case class Mapped(stats: List[UnitStats])
 
@@ -48,26 +41,11 @@ opaque type Coverage <: () => Either[Error, List[Statement]] =
 object Coverage:
   def apply(f: () => Either[Error, List[Statement]]): Coverage = f
 
-/** Capability: assigns the coverage statements to the units. */
-opaque type Mapping <: Inputs => Either[Error, Mapped] = Inputs => Either[Error, Mapped]
+/** A pipeline step: turns an I into an O or fails. */
+opaque type Stage[I, O] <: I => Either[Error, O] = I => Either[Error, O]
 
-object Mapping:
-  def apply(f: Inputs => Either[Error, Mapped]): Mapping = f
-
-/** Capability: computes the CRAP rows from the unit statistics. */
-opaque type Scoring <: Mapped => Either[Error, Scored] = Mapped => Either[Error, Scored]
-
-object Scoring:
-  def apply(f: Mapped => Either[Error, Scored]): Scoring = f
+object Stage:
+  def apply[I, O](f: I => Either[Error, O]): Stage[I, O] = f
 
 /** Capability: renders the scored units as text and decides the exit code. */
-opaque type Report <: Scored => Either[Error, Result] = Scored => Either[Error, Result]
-
-object Report:
-  def apply(f: Scored => Either[Error, Result]): Report = f
-
-def units(using u: Units): Units = u
-def coverage(using c: Coverage): Coverage = c
-def mapping(using m: Mapping): Mapping = m
-def scoring(using s: Scoring): Scoring = s
-def report(using r: Report): Report = r
+type Report = Stage[Scored, Result]

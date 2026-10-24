@@ -14,16 +14,10 @@ import crap4s.input.scoverage.scoverageAt
 import crap4s.input.splitExisting
 import crap4s.input.tasty.tastyUnitsAt
 import crap4s.output.colourEnabled
-import crap4s.pipeline.Coverage
 import crap4s.pipeline.Inputs
 import crap4s.pipeline.Mapped
-import crap4s.pipeline.Mapping
-import crap4s.pipeline.Report
 import crap4s.pipeline.Result
 import crap4s.pipeline.Scored
-import crap4s.pipeline.Scoring
-import crap4s.pipeline.Units
-import crap4s.pipeline.pipeline
 
 final case class Outcome(out: String, err: String, code: ExitCode)
 
@@ -62,12 +56,16 @@ object App:
       javaClassPath: String
   ): Either[Error, Outcome] =
     splitExisting(config.classpath, files).flatMap: (entries, missing) =>
-      given Units = tastyUnitsAt(config.tastyDirs, entries, baseDir, javaClassPath)
-      given Coverage = scoverageAt(config.coverageDirs, baseDir)
-      given Mapping = Mapping(mapInputs)
-      given Scoring = Scoring(scoreStats)
-      given Report = reportFor(config.format, config.threshold, config.all, color)
-      pipeline.map(outcome(_, missing))
+      val units = tastyUnitsAt(config.tastyDirs, entries, baseDir, javaClassPath)
+      val coverage = scoverageAt(config.coverageDirs, baseDir)
+      val report = reportFor(config.format, config.threshold, config.all, color)
+      for
+        found <- units()
+        statements <- coverage()
+        mapped <- mapInputs(Inputs(found, statements))
+        scored <- scoreStats(mapped)
+        result <- report(scored)
+      yield outcome(result, missing)
 
   private def mapInputs(inputs: Inputs): Either[Error, Mapped] =
     Right(Mapped(mapCoverage(inputs.units, inputs.statements)))
